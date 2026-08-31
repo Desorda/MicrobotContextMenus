@@ -8,9 +8,11 @@ This addon adds right-click context menu items to control the utility behaviors 
 <img width="618" height="488" alt="grafik" src="https://github.com/user-attachments/assets/7ad573c2-a996-4f79-9378-60ee12954b5b" />
 
 
-It also adds some Microbot-specific informational commands and settings that can be accessed by right-clicking the player frame. All features enabled by this addon can also be performed manually with the .z, .legacy, .settings, and companion whisper commands described on the [Microbot Wiki](http://Microbot.wikidot.com/).
+It also adds some Microbot-specific general commands and settings that can be accessed by right-clicking the player frame. All features enabled by this addon can also be performed manually with the .z, .legacy, .settings, and companion whisper commands described on the [Microbot Wiki](http://Microbot.wikidot.com/).
 
-<img width="513" height="300" alt="grafik" src="https://github.com/user-attachments/assets/0c72f0a5-4578-4635-b9c5-ece7a63cf6e2" />
+<img width="458" height="246" alt="grafik" src="https://github.com/user-attachments/assets/9dea30c8-1487-4077-9d74-94ad292dff53" />
+<img width="349" height="235" alt="grafik" src="https://github.com/user-attachments/assets/bc72e5fa-1664-4d8f-b7d7-57dab6ff27e1" />
+
 
 ### Features
 
