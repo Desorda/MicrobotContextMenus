@@ -1,0 +1,55 @@
+Name Change of the Addon to reflect the new Server name
+Added Set Debug on/off to "Companion Settings": Controls Debug output for your companions Abilities in case you want to understand what they are doing
+Added Set Spec for Mages (Arcane/Fire/Frost) and Paladins (Might/Magic): Will set the spec the Companion will use for their Rotation
+The Addon now querys Information about your Companions from the Server and can be smarter about what it shows when.
+Added Set Weapon to Shamans: Allows you to set the elemental weapon used by the companion, can be set to none as well. Only shows for MPDS and Tank Shamans.
+Added Growl Control to "Pet Control" for Hunters.
+Added Microbot Settings:
+	-Set Event on/off: Allows you to disable Server-wide Events like double XP if you want a more vanilla Experience
+	-Set Notifications (All/Emotes/Command) on/off: Allows you to disable Companion feedback into chat
+	-Set ChatGPT on/off: Enables or disables Companions AI Chat function
+Added Set Weapon for Paladins (Nightfall/Normal)
+Expanded "deny danger spells" for Paladins by Turn Undead and Warlocks by Death Coil
+Added "Legendary" Loot Treshold Option: With this Option Lootpets can pick up non bound epic Quality Items even with other players in your Raid (will be there twice if you add it somewhere else already, might need to change your other scripts)
+Added all .stats commands to "Microbot Stats"
+Added "Set Gear" Option for setting Companions Resist Gear. It goes by the folling Logic:
+	-If the companion doesn't have the right licence, don't show anything for that Element
+	-If companion Licence is enough but your Resistance is too low, shows a small Info about where your Resistance is and what is required
+	-Only if companion Licence and your Resistance are fulfilled show the actual set Gear options for that Element
+Reworked "Set Follow On" Options: It will now first list you (unfollow), then all Players in the Group/Raid, then Tank/Heal/MPDS/RDPS, if you have at least one Companion of that Role in your Group/Raid and as last Option your Target.
+Added "Set Transfer On" Option: Will show you (untransfer), then all Players in Group, then your Target as Options.
+Added "Return Companions" to player Menu: gives you the Option to untransfer, unfollow and remove all companions. Remove All will give you a Popup first.
+Added "Menu Settings" to Player Menu: For Settings related to this Addons behaviour. (Settings will be saved)
+Added "Set Confirmations" to Menu Settings: With this you can disable or enable the Popups for Warlock Summoning and Mage Portals. Won't affect the Popup for Remove All.
+Added "cast" Option for Totems you commonly need it for (Poison Cleansing, Resistance Totems)
+Added naming Settings to "Microbot Settings": allows you to set by what pattern your Companions will be named.
+Added Broadcast Options for this Addon: you can now do certain Actions for all your Companions at once or all companions of same Class/of same Role as the one selected. This is only avaible for things set by whispers to Companions 
+Added seperate Logic for broadcasting deny Danger Spells: Will take each bots level into account. You will now always get the deny danger spells Option, even with low level Companions, if Broadcast is set to "All"
+Added "Clear deny List" to Companion Settings
+Added "Reset Companion" to Companion Settings
+Added Legacy Settings to Microbot Settings
+Added a Timer to the "Set Gear" Options: This will alert you in Chat 2 Minutes after you used one of Gear Change Options (you can only change Companion Gear every 2 Minutes)
+Added "set Power Infusion On" Option for Lite/Legacy Priest Companions
+Added "Uninvite" Option to Companions: This will only show up if you are not Raid/Group Leader so you can always remove your own Companions (will do a .z remove targeting that bot)
+Added "List Gear/Status/Spells" Options to Companion Controls. 
+Added Key Bind Options for all Controls of this Addon
+Added "Set Drink/Eat" Options to Companion Settings
+Added "Set Heal/HealOOC" Options to Healer Companion Settings
+Added "Set Offheal/Offdps" Options to Priest,Paladin,Shaman DPS and Druid RDPS Companion Settings
+Split part of "Microbot Settings" into it's own Menu "Companions Settings"
+Unified Druid Rebirth Control and Shaman Reincarnation Control under "Revival", added Soulstone usage Control and Dispel Divine Intervention Options to all Rezzing Classes
+Added "Toggle PvP" Option to Self Menu
+Removed "Microbot Settings" and "Companions Settings" after they where added to the CCP
+Reworked "Menu Settings" so they won't show the active Setting as an Option anymore
+Added Setting for auto trading a Mage/Warlock the 10g after requesting a portal/summon, has a small delay befor accepting the trade for latency reasons.
+Added the new "Set Gear Cloak" Option to the Set Gear Menu, requires an Onyxia Scale Cloak to be equipped by the player
+Added the new Class/Role Specific CC/Focus Mark clears to their Menus
+Added updates on Companion follows and transfer to the Addons internal Companion list
+Added "unfollow" and "untransfer" Options for companions you have it with. Can be broadcast. The Addon will only remember what you have followed during the active session.
+Added curent Settings display to "Menu Settings", will update as settings are changed. 
+Removed confirmation Setting. With the new way portals and summons work you can now always cancel the request after ordering a portal/summon and don't automatically loose a charge anymore.
+Added Formation controls for Bots. Can be broadcasted.
+Added Context Menus when targeting your bots and rightclicking on the target.
+Added the same .z logic that the CCP uses so commands should still work while dead.
+Fixed Greater Blessing of Salvation requiring level 60 instead of 56
+Added the new .z tank Settings to control your MTs/OTs for Scripts

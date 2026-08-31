@@ -1,0 +1,36 @@
+<Bindings>
+	<Binding name="Toggle Broadcast Mode" header="MCM">
+        toggleBroadcastMode();
+	</Binding>
+    <Binding name="Broadcast to None" >
+        setBroadcast("NONE");
+	</Binding>
+	<Binding name="Broadcast to Class" >
+        setBroadcast("CLASS");
+	</Binding>
+	<Binding name="Broadcast to Role" >
+        setBroadcast("ROLE");
+	</Binding>
+	<Binding name="Broadcast to All" >
+        setBroadcast("ALL");
+	</Binding>
+	<Binding name="Toggle Confirmations" >
+        toggleConfirmations();
+	</Binding>
+	<Binding name="Set Confirmations On" >
+        setConfirmations("ON");
+	</Binding>
+	<Binding name="Set Confirmations Off" >
+        setConfirmations("OFF");
+	</Binding>
+	<Binding name="Toggle AutoTrade" >
+        toggleAutoTrade();
+	</Binding>	
+	<Binding name="Set AutoTrade On" >
+        setAutoTrade("ON");
+	</Binding>
+	<Binding name="Set AutoTrade Off" >
+        setAutoTrade("OFF");
+	</Binding>	
+	
+</Bindings>

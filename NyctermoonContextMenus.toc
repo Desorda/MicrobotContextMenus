@@ -1,7 +1,0 @@
-## Interface: 11200
-## Title: NyctermoonContextMenus
-## Notes: Customized right-click context menu commands for controlling party member bots on the Nyctermoon server.
-## Author: Liminal_Warmth
-## Version: 1.0
-
-NyctermoonContextMenus.lua

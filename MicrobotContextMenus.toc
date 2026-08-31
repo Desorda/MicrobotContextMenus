@@ -1,0 +1,10 @@
+## Interface: 11200
+## Title: MicrobotContextMenus
+## Notes: Customized right-click context menu commands for controlling party member bots on the Microbot server.
+## Author: original by Liminal_Warmth, updated by Dayraz
+## SavedVariables: savedSettings
+## Version: 1.0
+
+MicrobotContextMenus.lua
+MicrobotContextMenus.xml
+Bindings.xml

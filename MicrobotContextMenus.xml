@@ -1,0 +1,711 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.blizzard.com/wow/ui/ ../FrameXML/UI.xsd">
+
+    <Frame name="SetPercentageFrame" parent="UIParent" movable="true" frameStrata="LOW" enableMouse="true">
+        <Size>
+            <AbsDimension x="215" y="60" />
+        </Size>
+        <Anchors>
+            <Anchor point="CENTER" />
+        </Anchors>
+
+
+        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+            <BackgroundInsets>
+                <AbsInset left="12" right="12" top="12" bottom="12" />
+            </BackgroundInsets>
+            <TileSize>
+                <AbsValue val="32" />
+            </TileSize>
+            <EdgeSize>
+                <AbsValue val="40" />
+            </EdgeSize>
+            <Color r="0" g="0" b="0" a="1" />
+        </Backdrop>
+        <Scripts>
+            <OnLoad>
+               this:Hide();                
+            </OnLoad>
+            <OnDragStart>
+                this:StartMoving();
+            </OnDragStart>
+            <OnDragStop>
+                this:StopMovingOrSizing();
+            </OnDragStop>
+        </Scripts>
+        <Frames>
+
+
+            <EditBox name="SetDrinkEatEditBox" letters="3" frameStrata="LOW">
+                <Size>
+                    <AbsDimension x="205" y="32" />
+                </Size>
+                <Anchors>
+                    <Anchor point="TOP">
+                        <Offset>
+                            <AbsDimension x="0" y="-5" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <TextInsets>
+                    <AbsInset left="10"/>
+                </TextInsets>
+                <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+                    <BackgroundInsets>
+                        <AbsInset left="4" right="4" top="4" bottom="4" />
+                    </BackgroundInsets>
+                    <EdgeSize>
+                        <AbsValue val="20" />
+                    </EdgeSize>
+                    <Color r="0" g="0" b="0" a="0" />
+                </Backdrop>
+                <Insets>
+                    <AbsInset left="15" right="5" top="2" bottom="2" />
+                </Insets>
+                <Scripts>
+                    <OnLoad>
+                        SetDrinkEatEditBox:SetAutoFocus(false);
+                    </OnLoad>
+                    <OnEnter>
+                        GameTooltip:SetOwner(this, "ANCHOR_BOTTOMLEFT");
+						GameTooltip:SetText("Enter Value Between 1 and 100");
+						GameTooltip:Show();
+                    </OnEnter>
+                    <OnLeave>
+                        GameTooltip:Hide();
+                    </OnLeave>
+                    <OnEnterPressed>
+                        local command = SetDrinkEatEditBox:GetText();
+                        SetDrinkEatEditBox:ClearFocus()
+                    </OnEnterPressed>
+                    <OnEscapePressed>
+                        SetDrinkEatEditBox:ClearFocus()
+                    </OnEscapePressed>
+                </Scripts>
+                <FontString inherits="ChatFontNormal" />
+            </EditBox>
+
+            <Button name="OkayButton" inherits="UIPanelButtonTemplate" text="Okay" >
+				<Size x="75" y="25" />
+				<Anchors>
+					<Anchor point="BOTTOM">
+						<Offset>
+							<AbsDimension x="-45" y="0" />
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						confirmSetPercentageFrame();
+					</OnClick>
+				</Scripts>
+			</Button>
+
+            <Button name="CloseButton" inherits="UIPanelButtonTemplate" text="Close">
+				<Size x="75" y="25" />
+				<Anchors>
+					<Anchor point="BOTTOM">
+						<Offset>
+							<AbsDimension x="45" y="0" />
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						closeSetPercentageFrame();
+					</OnClick>
+				</Scripts>
+			</Button>
+
+        </Frames>
+
+    </Frame>
+	
+	<Frame name="SetDistanceFrame" parent="UIParent" movable="true" frameStrata="LOW" enableMouse="true">
+        <Size>
+            <AbsDimension x="215" y="60" />
+        </Size>
+        <Anchors>
+            <Anchor point="CENTER" />
+        </Anchors>
+
+
+        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+            <BackgroundInsets>
+                <AbsInset left="12" right="12" top="12" bottom="12" />
+            </BackgroundInsets>
+            <TileSize>
+                <AbsValue val="32" />
+            </TileSize>
+            <EdgeSize>
+                <AbsValue val="40" />
+            </EdgeSize>
+            <Color r="0" g="0" b="0" a="1" />
+        </Backdrop>
+        <Scripts>
+            <OnLoad>
+               this:Hide();                
+            </OnLoad>
+            <OnDragStart>
+                this:StartMoving();
+            </OnDragStart>
+            <OnDragStop>
+                this:StopMovingOrSizing();
+            </OnDragStop>
+        </Scripts>
+        <Frames>
+		
+		<EditBox name="SetDistanceEditBox" letters="2" frameStrata="LOW">
+			<Size>
+				<AbsDimension x="205" y="32" />
+			</Size>
+			<Anchors>
+				<Anchor point="TOP">
+					<Offset>
+						<AbsDimension x="0" y="-5" />
+					</Offset>
+				</Anchor>
+			</Anchors>
+			<TextInsets>
+				<AbsInset left="10"/>
+			</TextInsets>
+			<Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+				<BackgroundInsets>
+					<AbsInset left="4" right="4" top="4" bottom="4" />
+				</BackgroundInsets>
+				<EdgeSize>
+					<AbsValue val="20" />
+				</EdgeSize>
+				<Color r="0" g="0" b="0" a="0" />
+			</Backdrop>
+			<Insets>
+				<AbsInset left="15" right="5" top="2" bottom="2" />
+			</Insets>
+			<Scripts>
+				<OnLoad>
+					SetDistanceEditBox:SetAutoFocus(false);
+				</OnLoad>
+				<OnEnter>
+					GameTooltip:SetOwner(this, "ANCHOR_BOTTOMLEFT");
+					GameTooltip:SetText("Enter Value Between 1 and 30");
+					GameTooltip:Show();
+				</OnEnter>
+				<OnLeave>
+					GameTooltip:Hide();
+				</OnLeave>
+				<OnEnterPressed>
+					local command = SetDistanceEditBox:GetText();
+					SetDistanceEditBox:ClearFocus()
+				</OnEnterPressed>
+				<OnEscapePressed>
+					SetDistanceEditBox:ClearFocus()
+				</OnEscapePressed>
+			</Scripts>
+			<FontString inherits="ChatFontNormal" />
+		</EditBox>
+
+		<Button name="OkayButton" inherits="UIPanelButtonTemplate" text="Okay" >
+			<Size x="75" y="25" />
+			<Anchors>
+				<Anchor point="BOTTOM">
+					<Offset>
+						<AbsDimension x="-45" y="0" />
+					</Offset>
+				</Anchor>
+			</Anchors>
+			<Scripts>
+				<OnClick>
+					confirmSetDistanceFrame();
+				</OnClick>
+			</Scripts>
+		</Button>
+
+		<Button name="CloseButton" inherits="UIPanelButtonTemplate" text="Close">
+			<Size x="75" y="25" />
+			<Anchors>
+				<Anchor point="BOTTOM">
+					<Offset>
+						<AbsDimension x="45" y="0" />
+					</Offset>
+				</Anchor>
+			</Anchors>
+			<Scripts>
+				<OnClick>
+					closeSetDistanceFrame();
+				</OnClick>
+			</Scripts>
+		</Button>
+
+        </Frames>
+
+    </Frame>
+
+
+    <!--<Frame name="SavedMessagesFrame"  parent="UIParent" movable="true" enableMouse="true">
+        <Size x="300" y="295" />
+
+        <Anchors>
+            <Anchor point="CENTER" >
+                <Offset>
+                    <AbsDimension x="250" y="-35" />
+                </Offset>
+            </Anchor>
+        </Anchors>
+
+        <Scripts>
+            <OnLoad>SavedMessagesFrame_OnLoad(this);</OnLoad>
+            <OnDragStart>this:StartMoving();</OnDragStart>
+            <OnDragStop>this:StopMovingOrSizing();</OnDragStop>
+        </Scripts>
+
+        <Backdrop bgFile="Interface\Tooltips\UI-Tooltip-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+            <BackgroundInsets>
+                <AbsInset left="12" right="12" top="12" bottom="12" />
+            </BackgroundInsets>
+            <TileSize>
+                <AbsValue val="32" />
+            </TileSize>
+            <EdgeSize>
+                <AbsValue val="40" />
+            </EdgeSize>
+            <Color r="0" g="0" b="0" a="1" />
+        </Backdrop>
+
+        <Frames>
+
+            <Button name="CloseMessagesButton" inherits="UIPanelButtonTemplate" text="Close" frameStrata="MEDIUM">
+				<Size x="75" y="25" />
+				<Anchors>
+					<Anchor point="BOTTOM">
+						<Offset>
+							<AbsDimension x="0" y="0" />
+						</Offset>
+					</Anchor>
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						CloseMessagesFrame();
+					</OnClick>
+				</Scripts>
+			</Button>
+
+            <Button name="Message1Button" inherits="UIPanelButtonTemplate" enableMouse="true">
+                <Size x="240" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="SavedMessagesFrame">
+                        <Offset>
+                            <AbsDimension x="-18" y="-20" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        WhisperCommandsEditBox:SetText(Message1Button:GetText());
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message1Delete" inherits="UIPanelButtonTemplate" enableMouse="true" text="-">
+                <Size x="30" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="Message1Button" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        DeleteMessage(1);
+                    </OnClick>
+                </Scripts>
+            </Button>
+        
+            <Button name="Message2Button" inherits="UIPanelButtonTemplate" enableMouse="true">
+                <Size x="240" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="Message1Button" relativePoint="TOP">
+                        <Offset>
+                            <AbsDimension x="0" y="-25" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        WhisperCommandsEditBox:SetText(Message2Button:GetText());
+                    </OnClick>
+                </Scripts>
+            </Button>
+        
+            <Button name="Message2Delete" inherits="UIPanelButtonTemplate" enableMouse="true" text="-">
+                <Size x="30" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="Message2Button" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        DeleteMessage(2);
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+
+            <Button name="Message3Button" inherits="UIPanelButtonTemplate" enableMouse="true">
+                <Size x="240" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="Message2Button" >
+                        <Offset>
+                            <AbsDimension x="0" y="-25" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        WhisperCommandsEditBox:SetText(Message3Button:GetText());
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message3Delete" inherits="UIPanelButtonTemplate" enableMouse="true" text="-">
+                <Size x="30" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="Message3Button" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        DeleteMessage(3);
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message4Button" inherits="UIPanelButtonTemplate" enableMouse="true">
+                <Size x="240" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="Message3Button" >
+                        <Offset>
+                            <AbsDimension x="0" y="-25" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        WhisperCommandsEditBox:SetText(Message4Button:GetText());
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message4Delete" inherits="UIPanelButtonTemplate" enableMouse="true" text="-">
+                <Size x="30" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="Message4Button" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        DeleteMessage(4);
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message5Button" inherits="UIPanelButtonTemplate" enableMouse="true">
+                <Size x="240" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="Message4Button" >
+                        <Offset>
+                            <AbsDimension x="0" y="-25" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        WhisperCommandsEditBox:SetText(Message5Button:GetText());
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message5Delete" inherits="UIPanelButtonTemplate" enableMouse="true" text="-">
+                <Size x="30" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="Message5Button" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        DeleteMessage(5);
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message6Button" inherits="UIPanelButtonTemplate" enableMouse="true">
+                <Size x="240" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="Message5Button" >
+                        <Offset>
+                            <AbsDimension x="0" y="-25" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        WhisperCommandsEditBox:SetText(Message6Button:GetText());
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message6Delete" inherits="UIPanelButtonTemplate" enableMouse="true" text="-">
+                <Size x="30" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="Message6Button" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        DeleteMessage(6);
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message7Button" inherits="UIPanelButtonTemplate" enableMouse="true">
+                <Size x="240" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="Message6Button" >
+                        <Offset>
+                            <AbsDimension x="0" y="-25" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        WhisperCommandsEditBox:SetText(Message7Button:GetText());
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message7Delete" inherits="UIPanelButtonTemplate" enableMouse="true" text="-">
+                <Size x="30" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="Message7Button" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        DeleteMessage(7);
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message8Button" inherits="UIPanelButtonTemplate" enableMouse="true">
+                <Size x="240" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="Message7Button" >
+                        <Offset>
+                            <AbsDimension x="0" y="-25" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        WhisperCommandsEditBox:SetText(Message8Button:GetText());
+                    </OnClick>
+                </Scripts>
+            </Button>        
+        
+            <Button name="Message8Delete" inherits="UIPanelButtonTemplate" enableMouse="true" text="-">
+                <Size x="30" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="Message8Button" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        DeleteMessage(8);
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message9Button" inherits="UIPanelButtonTemplate" enableMouse="true">
+                <Size x="240" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="Message8Button" >
+                        <Offset>
+                            <AbsDimension x="0" y="-25" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        WhisperCommandsEditBox:SetText(Message9Button:GetText());
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message9Delete" inherits="UIPanelButtonTemplate" enableMouse="true" text="-">
+                <Size x="30" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="Message9Button" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        DeleteMessage(9);
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message10Button" inherits="UIPanelButtonTemplate" enableMouse="true">
+                <Size x="240" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="TOP" relativeTo="Message9Button" >
+                        <Offset>
+                            <AbsDimension x="0" y="-25" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        WhisperCommandsEditBox:SetText(Message10Button:GetText());
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+            <Button name="Message10Delete" inherits="UIPanelButtonTemplate" enableMouse="true" text="-">
+                <Size x="30" y="20" />
+                <TextInsets left="20" right="10" top="0" bottom="0" /> 
+                <Anchors>
+                    <Anchor point="LEFT" relativeTo="Message10Button" relativePoint="RIGHT">
+                        <Offset>
+                            <AbsDimension x="0" y="0" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Scripts>
+                    <OnClick>
+                        DeleteMessage(10);
+                    </OnClick>
+                </Scripts>
+            </Button>
+
+        </Frames>
+    </Frame>
+
+    <Frame name="WhisperCompsFrame">
+        <Frames>
+            <Button name="WhisperCompsMinimapButton" parent="Minimap" enableMouse="true" hidden="false" movable="true" toplevel="true">
+                <Size>
+                    <AbsDimension x="33" y="33" />
+                </Size>
+                <Anchors>
+                    <Anchor point="BOTTOMLEFT" relativeTo="Minimap">
+                        <Offset>
+                            <AbsDimension x="-25" y="-30" />
+                        </Offset>
+                    </Anchor>
+                </Anchors>
+                <Layers>
+                    <Layer level="BACKGROUND">
+                        <Texture name="WhisperCompsMinimapButtonIcon" file="Interface\Icons\Trade_Engineering.blp">
+                            <Size>
+                                <AbsDimension x="18" y="18" />
+                            </Size>
+                            <Anchors>
+                                <Anchor point="TOPLEFT">
+                                    <Offset>
+                                        <AbsDimension x="7" y="-6" />
+                                    </Offset>
+                                </Anchor>
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                    <Layer level="OVERLAY">
+                        <Texture name="WhisperCompsMinimapButtonBorder" file="Interface\Minimap\MiniMap-TrackingBorder.tga">
+                            <Size>
+                                <AbsDimension x="52" y="52" />
+                            </Size>
+                            <Anchors>
+                                <Anchor point="TOPLEFT" />
+                            </Anchors>
+                        </Texture>
+                    </Layer>
+                </Layers>
+                <Scripts>
+                    <OnLoad>
+                        ShowSavedMessages()
+                        this:RegisterForDrag("LeftButton");
+                    </OnLoad>
+                    <OnClick>
+                        if (WhisperCompsFrame:IsVisible()) then
+                            WhisperCompsFrame:Hide();
+                        else
+                            WhisperCompsFrame:Show();
+                        end
+                    </OnClick>
+                    <OnEnter>
+                        GameTooltip:SetOwner(this, "ANCHOR_BOTTOMLEFT");
+                        GameTooltip:SetText("Toggle Whisper Frame");
+                        
+                    </OnEnter>
+                    <OnLeave>
+                        GameTooltip:Hide();
+                    </OnLeave>
+                    <OnDragStart>
+                        this:StartMoving();
+                        this.isMoving = true;
+                    </OnDragStart>
+                    <OnDragStop>
+                        this:StopMovingOrSizing();
+                        this.isMoving = false;
+                    </OnDragStop>
+                </Scripts>
+                <HighlightTexture alphaMode="ADD" file="Interface\Minimap\UI-Minimap-ZoomButton-Highlight" />
+            </Button>
+        </Frames>
+    </Frame>-->
+
+
+</Ui>
