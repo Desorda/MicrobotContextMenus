@@ -3,8 +3,6 @@
 
 --[[ TODO:
 
-
-
 [Future Versions?]
 - Seperate Server Call for Spells of a certain Companion, a way to notice if a call is handeled.
 - Add tooltips to menu commands
@@ -451,6 +449,10 @@ f3:SetScript("OnEvent", function()
 			table.insert(transferredComps,name) 
 		end
 		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
+	-- case 5: a Companions Role has been changed
+	elseif string.find(arg1,"set") and string.find(arg1," to ")then		
+		ClientRequest("GRINFO:ALL:FULL")
+		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
 	end
 end)
 
@@ -594,8 +596,6 @@ initFrame:SetScript("OnEvent", function()
 	UnitPopupButtons["SETTINGS_DISP"] = { text = "|cFFFFFFA0Now: Autotrade - |r"..tradeString.."|cFFFFFFA0, Broadcast to - |r"..savedSettings["broadcastTo"], dist = 0 }	
 	UnitPopupButtons["SETTINGS_AUTOTRADE_ON"] = { text = "Set Auto Trade Port/Summ: |cff1EFF00on|r", dist = 0 }
 	UnitPopupButtons["SETTINGS_AUTOTRADE_OFF"] = { text = "Set Auto Trade Port/Summ: |cffFF0000off|r", dist = 0 }
-	--UnitPopupButtons["SETTINGS_CONFIRMATIONS_ON"] = { text = "Set Confirmations: |cff1EFF00on|r", dist = 0 }
-	--UnitPopupButtons["SETTINGS_CONFIRMATIONS_OFF"] = { text = "Set Confirmations: |cffFF0000off|r", dist = 0 }
 	UnitPopupButtons["SETTINGS_BROADCAST_NONE"] = { text = "Broadcast to: None", dist = 0 }
 	UnitPopupButtons["SETTINGS_BROADCAST_CLASS"] = { text = "Broadcast to: Class", dist = 0 }
 	UnitPopupButtons["SETTINGS_BROADCAST_ROLE"] = { text = "Broadcast to: Role", dist = 0 }
@@ -605,9 +605,6 @@ initFrame:SetScript("OnEvent", function()
 	table.insert(settingsMenu,"SETTINGS_DISP")
 	if not string.find(savedSettings["autoTrade"],"OFF") then table.insert(settingsMenu,"SETTINGS_AUTOTRADE_OFF") end
 	if not string.find(savedSettings["autoTrade"], "ON") then table.insert(settingsMenu,"SETTINGS_AUTOTRADE_ON") end
-	-- removed confirmation Setting, redundant with autotrade
-	--if not string.find(savedSettings["showConfirmations"],"OFF") then table.insert(settingsMenu,"SETTINGS_CONFIRMATIONS_OFF") end
-	--if not string.find(savedSettings["showConfirmations"], "ON") then table.insert(settingsMenu,"SETTINGS_CONFIRMATIONS_ON") end
 	if not string.find(savedSettings["broadcastTo"],"NONE") then table.insert(settingsMenu,"SETTINGS_BROADCAST_NONE") end
 	if not string.find(savedSettings["broadcastTo"],"CLASS") then table.insert(settingsMenu,"SETTINGS_BROADCAST_CLASS") end
 	if not string.find(savedSettings["broadcastTo"],"ROLE") then table.insert(settingsMenu,"SETTINGS_BROADCAST_ROLE") end
@@ -619,8 +616,6 @@ initFrame:SetScript("OnEvent", function()
 	UnitPopupButtons["SELF_DUNGEON_SETTINGS"] = { text = "|cFFD2B48CDungeon Settings|r", dist = 0, nested = 1 }
 	UnitPopupButtons["SELF_DUNGEON_NORMAL"] = { text = "Set Difficulty: |cff1EFF00Normal|r", dist = 0 }
 	UnitPopupButtons["SELF_DUNGEON_HEROIC"] = { text = "Set Difficulty: |cFFFFAA00Heroic|r", dist = 0 }	
-	UnitPopupButtons["SELF_DUNGEON_TANKS"] = { text = "List assigned |cFFC79C6ETanks|r", dist = 0 }	
-	UnitPopupButtons["SELF_DUNGEON_CLEAR_TANKS"] = { text = "Clear assigned |cFFC79C6ETanks|r", dist = 0 }
 	UnitPopupButtons["SELF_RESET_INSTANCES"] = { text = "Reset all instances", dist = 0 }
 	
 	StaticPopupDialogs["SELF_RESET_INSTANCES_CONFIRM"] = {
@@ -633,7 +628,7 @@ initFrame:SetScript("OnEvent", function()
 		timeout = 0,
 		hideOnEscape = 1
 	}
-	UnitPopupMenus["SELF_DUNGEON_SETTINGS"] = { "SELF_DUNGEON_NORMAL", "SELF_DUNGEON_HEROIC", "SELF_DUNGEON_TANKS", "SELF_DUNGEON_CLEAR_TANKS", "SELF_RESET_INSTANCES" }
+	UnitPopupMenus["SELF_DUNGEON_SETTINGS"] = { "SELF_DUNGEON_NORMAL", "SELF_DUNGEON_HEROIC", "SELF_RESET_INSTANCES" }
 	table.insert(UnitPopupMenus["SELF"],1,"SELF_DUNGEON_SETTINGS")
 	
 end)
@@ -1329,11 +1324,11 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
 
     -- Add role options to BOT_CONTROL menu based on class and set color of companions menu
     local classSettings = {
-        ["Warrior"] = {color = "C79C6E", roles = {"TANK", "DPS"}},
-        ["Paladin"] = {color = "F58CBA", roles = {"TANK", "HEALER", "DPS"}},
+        ["Warrior"] = {color = "C79C6E", roles = {"TANK", "MDPS"}},
+        ["Paladin"] = {color = "F58CBA", roles = {"TANK", "HEALER", "MDPS"}},
         ["Hunter"] = {color = "ABD473", roles = {}},
         ["Rogue"] = {color = "FFF569", roles = {}},
-        ["Priest"] = {color = "FFFFA0", roles = {"HEALER", "DPS"}},
+        ["Priest"] = {color = "FFFFA0", roles = {"HEALER", "RDPS"}},
         ["Shaman"] = {color = "0070DE", roles = {"TANK", "HEALER", "MDPS", "RDPS"}},
         ["Mage"] = {color = "69CCF0", roles = {}},
         ["Warlock"] = {color = "9482C9", roles = {}},
@@ -1343,7 +1338,9 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
     local classInfo = classSettings[MICROBOT_SELECTED_UNIT_CLASS]
     UnitPopupButtons["BOT_CONTROL"].text = "|cFF" .. classInfo.color .. "Companion Settings|r"
     for _, role in ipairs(classInfo.roles) do
-        table.insert(UnitPopupMenus["BOT_CONTROL"], "BOT_ROLE_" .. role)
+		if not(string.find(string.upper(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["role"]), role)) then
+			table.insert(UnitPopupMenus["BOT_CONTROL"], "BOT_ROLE_" .. role)
+		end
     end
 	
 	UnitPopupButtons["BOT_DRINK"] = { text = "Set Drink"..markerBCAll..markerBCRole..markerBCClass, dist = 0 }	
@@ -1374,6 +1371,11 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
 		table.insert(UnitPopupMenus["BOT_CONTROL"],"BOT_OFFHEAL")
 		table.insert(UnitPopupMenus["BOT_CONTROL"],"BOT_OFFDPS") 
 	end
+	
+	UnitPopupButtons["BOT_LIMITER_ON"] = { text = "Threat Limiter |cff1EFF00on|r"..markerBCAll..markerBCRole..markerBCClass, dist = 0 }	
+	UnitPopupButtons["BOT_LIMITER_OFF"] = { text = "Threat Limiter |cffFF0000off|r"..markerBCAll..markerBCRole..markerBCClass, dist = 0 }
+	table.insert(UnitPopupMenus["BOT_CONTROL"],"BOT_LIMITER_ON")
+	table.insert(UnitPopupMenus["BOT_CONTROL"],"BOT_LIMITER_OFF")	
 	
 	-- Add to List of assigned Tanks
 	UnitPopupButtons["BOT_ASSIGN_TANK"] = { text = "|cff1EFF00Assign|r as |cFFC79C6ETank|r"..markerBCRole, dist = 0 }
@@ -2038,6 +2040,7 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
         Add Set Formation Buttons
     ----------------------------]]
 	UnitPopupButtons["BOT_FORMATION"] = { text = "Set Formation"..markerBCAll..markerBCRole..markerBCClass, dist = 0, nested = 1 }
+	UnitPopupButtons["BOT_FORMATION_DEFAULT"] = { text = "Return to default", dist = 0 }	
 	UnitPopupButtons["BOT_FORMATION_DISTANCE"] = { text = "Set Distance", dist = 0 }
 	UnitPopupButtons["BOT_FORMATION_ANGLE_FRONT"] = { text = "Angle: Front", dist = 0 }	
 	UnitPopupButtons["BOT_FORMATION_ANGLE_LEFT"] = { text = "Angle: Left", dist = 0 }		
@@ -2049,6 +2052,7 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
 	UnitPopupButtons["BOT_FORMATION_ANGLE_BOTTOMRIGHT"] = { text = "Angle: Back-Right", dist = 0 }
 	
   UnitPopupMenus["BOT_FORMATION"] = {
+		"BOT_FORMATION_DEFAULT",
 		"BOT_FORMATION_DISTANCE",
 		"BOT_FORMATION_ANGLE_FRONT",
 		"BOT_FORMATION_ANGLE_LEFT",
@@ -2212,11 +2216,6 @@ function UnitPopup_OnClick()
         MCM_Send(".settings difficulty normal")
     elseif button == "SELF_DUNGEON_HEROIC" then
         MCM_Send(".settings difficulty heroic")
-	elseif button == "SELF_DUNGEON_TANKS" then
-		ClearTarget()
-        MCM_Send(".z tank")
-	elseif button == "SELF_DUNGEON_CLEAR_TANKS" then
-        MCM_Send(".z tank clear")		
 	elseif button == "SETTINGS_CONFIRMATIONS_ON" then
         setConfirmations("ON")
 	elseif button == "SETTINGS_CONFIRMATIONS_OFF" then
@@ -2363,59 +2362,14 @@ function UnitPopup_OnClick()
         SendTargetedBotZCommand(MICROBOT_SELECTED_UNIT, "toggle aoe")
     elseif button == "BOT_ROLE_TANK" then
         SendTargetedBotZCommand(MICROBOT_SELECTED_UNIT, "set tank")
-		--Make sure our companion Data is as up to date a as possible
-		if(healerCompanions and table_contains(healerCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(healerCompanions,table_index(healerCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		if(rdpsCompanions and table_contains(rdpsCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(rdpsCompanions,table_index(rdpsCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		if(mdpsCompanions and table_contains(mdpsCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(mdpsCompanions,table_index(mdpsCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		table.insert(tankCompanions,MICROBOT_SELECTED_UNIT_NAME)
     elseif button == "BOT_ROLE_HEALER" then
-        SendTargetedBotZCommand(MICROBOT_SELECTED_UNIT, "set healer")
-		--Make sure our companion Data is as up to date a as possible
-		if(tankCompanions and table_contains(tankCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(tankCompanions,table_index(tankCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		if(rdpsCompanions and table_contains(rdpsCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(rdpsCompanions,table_index(rdpsCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		if(mdpsCompanions and table_contains(mdpsCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(mdpsCompanions,table_index(mdpsCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		table.insert(healerCompanions,MICROBOT_SELECTED_UNIT_NAME)
+        SendTargetedBotZCommand(MICROBOT_SELECTED_UNIT, "set healer")		
     elseif button == "BOT_ROLE_DPS" then
         SendTargetedBotZCommand(MICROBOT_SELECTED_UNIT, "set dps")
-		-- We don't track this because it is not a real companion role, just something the command accepts, so if you set to this bad luck.. 
     elseif button == "BOT_ROLE_MDPS" then
-        SendTargetedBotZCommand(MICROBOT_SELECTED_UNIT, "set mdps")
-		--Make sure our companion Data is as up to date a as possible
-		if(tankCompanions and table_contains(tankCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(tankCompanions,table_index(tankCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		if(rdpsCompanions and table_contains(rdpsCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(rdpsCompanions,table_index(rdpsCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		if(healerCompanions and table_contains(healerCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(healerCompanions,table_index(healerCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		table.insert(mdpsCompanions,MICROBOT_SELECTED_UNIT_NAME)
+        SendTargetedBotZCommand(MICROBOT_SELECTED_UNIT, "set mdps")		
     elseif button == "BOT_ROLE_RDPS" then
-        SendTargetedBotZCommand(MICROBOT_SELECTED_UNIT, "set rdps")
-		--Make sure our companion Data is as up to date a as possible
-		if(tankCompanions and table_contains(tankCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(tankCompanions,table_index(tankCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		if(mdpsCompanions and table_contains(mdpsCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(mdpsCompanions,table_index(mdpsCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		if(healerCompanions and table_contains(healerCompanions,MICROBOT_SELECTED_UNIT_NAME)) then
-			table.remove(healerCompanions,table_index(healerCompanions,MICROBOT_SELECTED_UNIT_NAME))
-		end
-		table.insert(rdpsCompanions,MICROBOT_SELECTED_UNIT_NAME)
+        SendTargetedBotZCommand(MICROBOT_SELECTED_UNIT, "set rdps")						
 	elseif button == "BOT_RESET" then
 		BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"reset")
 	elseif button == "BOT_DRINK" then
@@ -2436,6 +2390,10 @@ function UnitPopup_OnClick()
 	elseif button == "BOT_OFFDPS" then
 		offDpsRequested = "y"
 		SetPercentageFrame:Show()
+	elseif button == "BOT_LIMITER_ON" then
+		BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"set limiter on")
+	elseif button == "BOT_LIMITER_OFF" then
+		BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"set limiter off")
 	elseif button == "BOT_ASSIGN_TANK" then
 		BroadcastBotWhisperCommand({"ROLE"},"set tank")	
 	elseif button == "BOT_UNASSIGN_TANK" then		
@@ -2556,7 +2514,7 @@ function UnitPopup_OnClick()
 		local target = BroadcastBotWhisperCommand({"ROLE","CLASS"},"set gear frost")
 		runGearChangeTimer(target["group"])
 	elseif button == "BOT_SET_GEAR_VISCIDUS" then
-		local target = BroadcastBotWhisperCommand({"ROLE","CLASS"},"set gear viscidús")	
+		local target = BroadcastBotWhisperCommand({"ROLE","CLASS"},"set gear viscidus")	
 		runGearChangeTimer(target["group"])
 	elseif button == "BOT_SET_GEAR_CLOAK" then 
 		local target = BroadcastBotWhisperCommand({"ROLE","CLASS"},"set gear cloak")	
@@ -2577,7 +2535,7 @@ function UnitPopup_OnClick()
         SendTargetedBotWhisperCommand(MICROBOT_SELECTED_UNIT_NAME, "set gear all frost")
 		runGearChangeTimer("all Companions")
 	elseif button == "BOT_SET_GEAR_ALL_VISCIDUS" then
-        SendTargetedBotWhisperCommand(MICROBOT_SELECTED_UNIT_NAME, "set gear all viscidús")		
+        SendTargetedBotWhisperCommand(MICROBOT_SELECTED_UNIT_NAME, "set gear all viscidus")		
 		runGearChangeTimer("all Companions")
 	elseif button == "BOT_SET_GEAR_ALL_CLOAK" then
         SendTargetedBotWhisperCommand(MICROBOT_SELECTED_UNIT_NAME, "set gear all cloak")		
@@ -2592,6 +2550,8 @@ function UnitPopup_OnClick()
 	--[[------------------------------------
     Bot Formation Controls
     --------------------------------------]]	
+	elseif button == "BOT_FORMATION_DEFAULT" then
+		BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"set formation default")
 	elseif button == "BOT_FORMATION_DISTANCE" then
 		SetDistanceFrame:Show()				
 	elseif button == "BOT_FORMATION_ANGLE_FRONT" then

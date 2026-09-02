@@ -61,8 +61,6 @@ Right click on your player frame to see the Player Menu commands.
 
 - **Set Difficulty: Normal**: Sets your dungeon difficulty to Normal. (Standard Loot and Enemy settings in instances)
 - **Set Difficulty: Heroic**: Sets your dungeon difficulty to Heroic. (+100% XP and Loot, 1.5X Enemy damage and health in instances)
-- **List assigned Tanks**: Shows which Tanks you have currently assigned (used for Boss Scripts, not linked to Companion Roles)
-- **Clear assigned Tanks**: Clears which Tanks have currently assigned (used for Boss Scripts, not linked to Companion Roles)
 - **Reset all instances**: Resets all of your active instances. (Max 5 resets per hour, same as using "/script ResetInstances()")
 
 ### Menu Settings
@@ -170,6 +168,7 @@ General settings that changes a Companions behavior or gives Infos about them.
 - **Set Heal/HealOOC**: Allows you to set 
 		Heal - at which % of ally health a healer should start healing in combat or 
 		HealOOC - at which % of ally health a healer should start healing out of combat (healers).
+- **Threat Limiter on/off**: Normaly your Companions will try to stay beyond the Threat of the Tank, set this off for them to go all out (all classes)
 - **Assign/unassign as Tank**: Allows you to add/remove a Companion from the List of assigned Tanks for Boss Scripts
 - **Reset Companion**: Try to reset your Companions if they are stuck in combat, teleport etc. (all classes)
 - **Debug on/off**: Allows your Companionen to give Debug output for what they are doing (all classes)

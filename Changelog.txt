@@ -53,3 +53,8 @@ Added Context Menus when targeting your bots and rightclicking on the target.
 Added the same .z logic that the CCP uses so commands should still work while dead.
 Fixed Greater Blessing of Salvation requiring level 60 instead of 56
 Added the new .z tank Settings to control your MTs/OTs for Scripts
+Fixed a typo in the Viscidius Gear change
+Removed assigned Tank overview after it was added (better) to the CCP
+Added "Return to default" Option to Formation Settings
+Added "Threat Limiter on/off" to Companion Settings
+Improved how the Addon tracks and displays Role changes
