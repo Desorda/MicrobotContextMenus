@@ -472,6 +472,7 @@ function SERVERTOCLIENT:OnEvent()
 			local companionName = companionData[1]
 			local companionOwner = companionData[6]			
 			if(companionOwner and not string.find(companionOwner,UnitName("player"))) then
+				if not (allCompanionInfos) then allCompanionInfos = {} end
 				if not (allCompanionInfos[companionName]) then allCompanionInfos[companionName] = {} end				
 				allCompanionInfos[companionName]["race"] = companionData[2]
 				allCompanionInfos[companionName]["class"] = companionData[3]				
