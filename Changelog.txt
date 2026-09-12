@@ -58,3 +58,9 @@ Removed assigned Tank overview after it was added (better) to the CCP
 Added "Return to default" Option to Formation Settings
 Added "Threat Limiter on/off" to Companion Settings
 Improved how the Addon tracks and displays Role changes
+Disabled a debug output that spammed some Chat Windows
+Changed how the Addon fetches Data from the Server so it knows more things about your own Companions now.
+Changed that "Set Transfer On" Option now only shows if a Companion can still be transfered (or for followed companions bc we do not have that information for them consistently)
+Changed that "Set Focus/CC Mark" Options now only shows Marks the Companion is not set to already (or all for followed companions bc we do not have that information for them consistently)
+Changed that "Set Spec" Options now only shows Specs the Companion is not set to already (or all for followed companions bc we do not have that information for them consistently)
+Changed that Companions followed to you now show "Return Follow" instead of set follow on.

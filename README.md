@@ -82,7 +82,7 @@ Right click on a target, party or raid member to see the Companion Menu commands
 
 - **Open Portal**: Will ask your mage to open a portal to any of the major cities of their character faction, provided they are high enough level to do so.
 - **Deny Danger Spells**
-- **Set Spec**: Allows you to change a Mages spec (Fire/Frost/Arcane) after hiring them.
+- **Set Spec**: Allows you to change a Mages spec (Fire/Frost/Arcane) after hiring them.  Will only show the Spec the Companion is not already in.
 
 ### Shaman
 
@@ -100,7 +100,7 @@ Right click on a target, party or raid member to see the Companion Menu commands
 - **Set first Blessing**: Ask your paladin to use only this Blessing. Dynamically upgrades to the Greater version when available.
 - **Set second lessing**: Ask your paladin to use only this as alternative Blessing. Needs a first Blessing to be set. Dynamically upgrades to the Greater version when available.
 - **Set Aura**: Ask your paladin to use this Aura.
-- **Set Spec**: Allows you to change a Paladins spec (Might/Magic) after hiring them.
+- **Set Spec**: Allows you to change a Paladins spec (Might/Magic) after hiring them. Will only show the Spec the Companion is not already in.
 - **Set Weapon Nightfall/Normal**: Allows you to change a Paladins Weapon to Nightfall and back (MDPS and Tank only)
 - **Revial**: Soulstone usage and dispel Divine Intervention.
 - **Deny Danger Spells**
@@ -194,7 +194,7 @@ Lets you control where your Companions will move to in relation to you, plus the
 
 ### Set CC and Focus Marks	
 
-These menus allow you to set a companion's crowd control and focus targets by assigning them a specific raid icon as described on the [Microbot Wiki page for Behavior .z commands](http://Microbot.wikidot.com/zcommands#toc19).
+These menus allow you to set a companion's crowd control and focus targets by assigning them a specific raid icon as described on the [Microbot Wiki page for Behavior .z commands](http://Microbot.wikidot.com/zcommands#toc19). Will only show Options the Companion is not yet set to.
 
 - **Set CC Mark**: Sets the companion's CC mark. This companion will attempt to keep all enemies with this raid icon crowd controlled.
 - **Set Focus Mark**: Sets the companion's focus mark. This companion will focus their damage and attacks exclusively on living enemies with this raid icon and ignore other targets.
@@ -203,5 +203,5 @@ These menus allow you to set a companion's crowd control and focus targets by as
 
 Lets you change who the Companion is listening to. The Addon will keep Track of Companions that are followed/transferred and will give you a unfollow/untransfer Option for them.
 You can follow to your other Companions by role (like following your heals to a RDPS) and you will always get all real players in the Group/Raid and your Target as Options for follow/transfer.
-Clear follow/transfer will also return Companions that where followed/transferred onto you.
+Return follow will return Companions that where followed onto you.
 

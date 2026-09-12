@@ -9,7 +9,6 @@
 - Hold Key for quick Modifiers/prevent Menu closing
 - Save and Manage presets for your companions (Melee totems etc) 
 - Set distancing/angle with proper display frame (some BWL, overworld)
-- Use new Server Interface Calls for more Information
 
 [RAID MENU?]
 
@@ -18,204 +17,6 @@
 	Bindings Variable
 --------------------------------------]]	
 BINDING_HEADER_MCM = "Microbot Context Menus"
---[[------------------------------------
-	Get Companion Infos from Server
---------------------------------------]]		
-CLIENTTOSERVER = CreateFrame("Frame",nil,UIParent)
-
--- Create a frame for receiving responses from the server.
-SERVERTOCLIENT = CreateFrame("Frame",nil,UIParent) -- create a frame that will listen for events
-SERVERTOCLIENT:RegisterEvent("CHAT_MSG_ADDON") -- register what events do you want the frame to listen for - in our case we want to listen to messages from the server
-
-function ClientRequest(arg)
-	-- It's necessary to call an OnUpdate function from a frame in order to SendAddonMessages to the server
-	CLIENTTOSERVER:SetScript("OnUpdate", function()
-		-- Send the message request to the server
-		SendAddonMessage("nexus", arg, "BATTLEGROUND")
-		
-		DEFAULT_CHAT_FRAME:AddMessage(arg .. " sent")
-		-- Clear the OnUpdate script after it finishes because the job's done and we don't want to spam the server
-		CLIENTTOSERVER:SetScript("OnUpdate", nil)
-		
-	end)
-end
-
-function SERVERTOCLIENT:OnEvent()
-	--DEFAULT_CHAT_FRAME:AddMessage("SMSG:" .. arg1 .. " arg2:" .. arg2 .. " CHANNEL:" .. arg3 .. " SENDER:" .. arg4)
-	-- DEFAULT_CHAT_FRAME:AddMessage(arg1)
-	
-	-- We are only interested in capturing messages from the server on the addon channel, which is invisible to the players
-	if event ~= "CHAT_MSG_ADDON" then
-		return
-	end
-	
-	-- Check if the message starts with [nexus]
-	local startPos, endPos = string.find(arg1, "%[nexus%]")
-	
-	-- If no [nexus] tag is found, or the channel is different than the server one, or the sender is not this player, then do nothing
-	if startPos == nil or arg3 ~= "UNKNOWN" or arg4 ~= UnitName("player") then
-		return
-	end
-	-- Extract the part of the instruction after the [nexus] tag
-	-- This instruction is the same as the one you've sent in ClientRequest(arg), like for example: GRINFO:ALL:FULL
-	-- The server is sending back for which instruction it gives the answer, so you know how to process the answer
-	local serverResponse = string.sub(arg1, endPos + 2) -- +2 to skip the space after [nexus]	
-	
-	--only do our stuff when the Server sends the a response we can handle so we don't clash with other addons using this Interface
-	if string.find(arg1,"GRINFO:ALL:FULL") and serverResponse ~= "GRINFO:ALL:FULL" then
-		--End the function prematurely if the server doesn't return any companion information			
-		
-		local companionInfo = string.sub(serverResponse, string.find(serverResponse, " ") + 1)
-		debugcompanionInfo = companionInfo 
-				
-		-- Lists of companions
-		allCompanions = {}
-		ownCompanionNames = {}
-		allCompanionInfos = {}
-		-- Roles
-		tankCompanions = {}
-		healerCompanions = {}
-		mdpsCompanions = {}
-		rdpsCompanions = {}
-		-- Classes
-		druidCompanions = {}
-		hunterCompanions = {}
-		mageCompanions = {}
-		paladinCompanions = {}
-		priestCompanions = {}
-		rogueCompanions = {}
-		shamanCompanions = {}
-		warlockCompanions = {}
-		warriorCompanions = {}
-
-
-		-- Split companionInfo by space to extract companion details
-		local nameStart = 1
-		local nameEnd = string.find(companionInfo, " ", nameStart)
-
-		while nameEnd do
-			local nameBlock = string.sub(companionInfo, nameStart, nameEnd - 1)
-			table.insert(allCompanions, nameBlock)
-			nameStart = nameEnd + 1
-			nameEnd = string.find(companionInfo, " ", nameStart)
-		end
-
-		-- Insert the last block of companion info (if there is no space at the end)
-		if nameStart <= string.len(companionInfo) then
-			local lastBlock = string.sub(companionInfo, nameStart)
-			table.insert(allCompanions, lastBlock)
-		end		
-				
-		-- Now parse the companions into their respective fields: name, race, class, role, and owner
-		for _, companion in ipairs(allCompanions) do
-			--DEFAULT_CHAT_FRAME:AddMessage("Companion Raw Data: " .. companion, 1.0, 1.0, 0.0) -- Output the raw companion data
-			local companionData = {}
-			local partStart = 1
-			local partEnd = string.find(companion, ":")
-			while partEnd do
-				table.insert(companionData, string.sub(companion, partStart, partEnd - 1))
-				partStart = partEnd + 1
-				partEnd = string.find(companion, ":", partStart)
-			end
-
-			-- Add the last part (owner name) if there is no colon at the end
-			if partStart <= string.len(companion) then
-				table.insert(companionData, string.sub(companion, partStart))
-			end
-
-			-- Now we have companionData[1] = name, [2] = race, [3] = class, [4] = role, [5] = Licence, [6] = owner
-			local companionName = companionData[1]
-			local companionRace = companionData[2]
-			local companionClass = companionData[3]
-			local companionRole = companionData[4]
-			local companionLicence = companionData[5]
-			local companionOwner = companionData[6]
-			
-			allCompanionInfos[companionName] = {}
-			allCompanionInfos[companionName]["race"] = companionRace
-			allCompanionInfos[companionName]["class"] = companionClass	
-			allCompanionInfos[companionName]["role"] = companionRole
-			allCompanionInfos[companionName]["licence"] = companionLicence
-			allCompanionInfos[companionName]["owner"] = companionOwner
-			
-			if(companionOwner and string.find(companionOwner,UnitName("player"))) then
-				table.insert(ownCompanionNames, companionName)
-			end
-			
-			-- Store companions based on their role
-			if companionRole == "Tank" then
-				table.insert(tankCompanions, companionName)
-			elseif companionRole == "Healer" then
-				table.insert(healerCompanions, companionName)				
-			elseif companionRole == "MDPS" then
-				table.insert(mdpsCompanions, companionName)
-			elseif companionRole == "RDPS" then
-				table.insert(rdpsCompanions, companionName)
-			end
-
-			-- Store companions based on their role
-			if companionClass == "Druid" then
-				table.insert(druidCompanions, companionName)
-			elseif companionClass == "Hunter" then
-				table.insert(hunterCompanions, companionName)
-			elseif companionClass == "Mage" then
-				table.insert(mageCompanions, companionName)
-			elseif companionClass == "Paladin" then
-				table.insert(paladinCompanions, companionName)
-			elseif companionClass == "Priest" then
-				table.insert(priestCompanions, companionName)
-			elseif companionClass == "Rogue" then
-				table.insert(rogueCompanions, companionName)
-			elseif companionClass == "Shaman" then
-				table.insert(shamanCompanions, companionName)
-			elseif companionClass == "Warlock" then
-				table.insert(warlockCompanions, companionName)
-			elseif companionClass == "Warrior" then
-				table.insert(warriorCompanions, companionName)
-			end
-			
-		end
-		
-		
-	end
-	
-	--Save UnitIDs for all members in Group/raid
-	otherPlayers = {}
-	playerUnitIds = {}
-	local numMembers = 0
-	local getNameFunc
-	local getUnitIdFunc
-	local playerName = UnitName("player")
-	
-	if UnitInRaid("player") then
-		numMembers = GetNumRaidMembers()
-		getNameFunc = function(i) 
-			local name = GetRaidRosterInfo(i)
-			return name
-		end
-		getUnitIdFunc = function(j) 
-			local unitId = "raid"..j
-			return unitId
-		end
-	elseif GetNumPartyMembers() > 0 then
-		numMembers = GetNumPartyMembers()
-		getNameFunc = function(i) return UnitName("party"..i) end
-		getUnitIdFunc = function(j) return "party"..j end
-	else
-		--DEFAULT_CHAT_FRAME:AddMessage("Get all players failed: You are not in a party or raid.")
-		return
-	end
-	for i = 1, numMembers do
-		local name = getNameFunc(i)	
-		if(name and name ~= playerName and allCompanionInfos and allCompanionInfos[name]) then
-			allCompanionInfos[name]["unitID"] = getUnitIdFunc(i)
-		elseif name and name ~= playerName then
-			playerUnitIds[name] = getUnitIdFunc(i)
-			table.insert(otherPlayers,name)
-		end
-	end
-end
-	
 
 --[[------------------------------------
 	Helpers
@@ -325,6 +126,406 @@ function MCM_Send(msg)
 	end
 end
 
+function updateData()
+	MCM_Send(".z remove list")	 
+	ClientRequest("GRINFO:ALL:FULL")
+	if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
+end
+
+--[[------------------------------------
+	Get Companion Infos from Server
+--------------------------------------]]		
+CLIENTTOSERVER = CreateFrame("Frame",nil,UIParent)
+
+-- Create a frame for receiving responses from the server.
+SERVERTOCLIENT = CreateFrame("Frame",nil,UIParent) -- create a frame that will listen for events
+SERVERTOCLIENT:RegisterEvent("CHAT_MSG_ADDON") -- register what events do you want the frame to listen for - in our case we want to listen to messages from the server
+
+function ClientRequest(arg)
+	-- It's necessary to call an OnUpdate function from a frame in order to SendAddonMessages to the server
+	CLIENTTOSERVER:SetScript("OnUpdate", function()
+		-- Send the message request to the server
+		SendAddonMessage("nexus", arg, "BATTLEGROUND")
+		
+		--DEFAULT_CHAT_FRAME:AddMessage(arg .. " sent")
+		-- Clear the OnUpdate script after it finishes because the job's done and we don't want to spam the server
+		CLIENTTOSERVER:SetScript("OnUpdate", nil)
+		
+	end)
+end
+
+--[[------------------------------------
+	Recieve Companion Infos from Server
+--------------------------------------]]
+
+function SERVERTOCLIENT:OnEvent()
+	--DEFAULT_CHAT_FRAME:AddMessage("SMSG:" .. arg1 .. " arg2:" .. arg2 .. " CHANNEL:" .. arg3 .. " SENDER:" .. arg4)
+	-- DEFAULT_CHAT_FRAME:AddMessage(arg1)
+	
+	-- We are only interested in capturing messages from the server on the addon channel, which is invisible to the players
+	if event ~= "CHAT_MSG_ADDON" then
+		return
+	end
+	
+	-- Check if the message starts with [nexus]
+	local startPos, endPos = string.find(arg1, "%[nexus%]")
+	
+	-- If no [nexus] tag is found, or the channel is different than the server one, or the sender is not this player, then do nothing
+	if startPos == nil or arg3 ~= "UNKNOWN" or arg4 ~= UnitName("player") then
+		return
+	end
+	-- Extract the part of the instruction after the [nexus] tag
+	-- This instruction is the same as the one you've sent in ClientRequest(arg), like for example: GRINFO:ALL:FULL
+	-- The server is sending back for which instruction it gives the answer, so you know how to process the answer
+	local serverResponse = string.sub(arg1, endPos + 2) -- +2 to skip the space after [nexus]	
+	
+	if string.find(arg1,"ACINFO:ACTIVE:LIST")  and serverResponse ~= "ACINFO:ACTIVE:LIST" then
+		local companionInfo = string.sub(serverResponse, string.find(serverResponse, " ") + 1)
+		--DEFAULT_CHAT_FRAME:AddMessage("LIST: "..companionInfo)
+		
+		-- Lists of companions
+		returnedCompanions = {}
+		ownCompanionNames = {}
+		allCompanionInfos = {}
+		compsFollowingYou = {}
+		-- Roles
+		tankCompanions = {}
+		healerCompanions = {}
+		mdpsCompanions = {}
+		rdpsCompanions = {}
+		-- Classes
+		druidCompanions = {}
+		hunterCompanions = {}
+		mageCompanions = {}
+		paladinCompanions = {}
+		priestCompanions = {}
+		rogueCompanions = {}
+		shamanCompanions = {}
+		warlockCompanions = {}
+		warriorCompanions = {}
+
+
+		-- Split companionInfo by space to extract companion details
+		local nameStart = 1
+		local nameEnd = string.find(companionInfo, " ", nameStart)
+
+		while nameEnd do
+			local nameBlock = string.sub(companionInfo, nameStart, nameEnd - 1)
+			table.insert(returnedCompanions, nameBlock)
+			nameStart = nameEnd + 1
+			nameEnd = string.find(companionInfo, " ", nameStart)
+		end
+
+		-- Insert the last block of companion info (if there is no space at the end)
+		if nameStart <= string.len(companionInfo) then
+			local lastBlock = string.sub(companionInfo, nameStart)
+			table.insert(returnedCompanions, lastBlock)
+		end	
+		
+		for _, companion in ipairs(returnedCompanions) do
+			--DEFAULT_CHAT_FRAME:AddMessage("Companion Raw Data: " .. companion, 1.0, 1.0, 0.0) -- Output the raw companion data
+			local companionData = {}
+			local partStart = 1
+			local partEnd = string.find(companion, ":")
+			while partEnd do
+				table.insert(companionData, string.sub(companion, partStart, partEnd - 1))
+				partStart = partEnd + 1
+				partEnd = string.find(companion, ":", partStart)
+			end
+
+			-- Add the last part (owner name) if there is no colon at the end
+			if partStart <= string.len(companion) then
+				table.insert(companionData, string.sub(companion, partStart))
+			end
+			
+			-- Now we have companionData[1] = name, [2] = Class, [3] = Role, [4] = Kind (l/p), [5] = Level, [6] = Licence, [7] = Race, [8] = Gender, [9] = Durability, 
+			-- [10] = Specc, [11] = Owner, [12] = Master, [13] = Follow, [14] = Focus, [15] = CC, [16] = Transferable, [17] = AI Preset
+			
+			local companionName = companionData[1]
+			local companionRace = companionData[7]
+			if string.find(companionRace,1) then companionRace = "Human"
+			elseif string.find(companionRace,2) then companionRace = "Orc"
+			elseif string.find(companionRace,3) then companionRace = "Dwarf"			
+			elseif string.find(companionRace,4) then companionRace = "NightElf"			
+			elseif string.find(companionRace,5) then companionRace = "Undead"
+			elseif string.find(companionRace,6) then companionRace = "Tauren"			
+			elseif string.find(companionRace,7) then companionRace = "Gnome" 
+			elseif string.find(companionRace,8) then companionRace = "Troll" end	
+			local companionClass = companionData[2]
+			local companionRole = companionData[3]
+			local companionLicence = companionData[6]
+			local companionMaster = companionData[12]
+			if string.find(companionMaster,"%.") then companionMaster = UnitName("player") end
+			
+			allCompanionInfos[companionName] = {}
+			allCompanionInfos[companionName]["race"] = companionRace
+			allCompanionInfos[companionName]["class"] = companionClass	
+			allCompanionInfos[companionName]["role"] = companionRole
+			allCompanionInfos[companionName]["licence"] = companionLicence
+			allCompanionInfos[companionName]["master"] = companionMaster
+			allCompanionInfos[companionName]["specc"] = companionData[10]
+			allCompanionInfos[companionName]["focusmarks"] =  companionData[14]
+			allCompanionInfos[companionName]["ccmarks"] =  companionData[15]
+			allCompanionInfos[companionName]["transferable"] =  companionData[16]
+			allCompanionInfos[companionName]["following"] = companionData[13]
+			
+			if(companionMaster and string.find(companionMaster,UnitName("player"))) then
+				table.insert(ownCompanionNames, companionName)
+			elseif string.find(allCompanionInfos[companionName]["following"],UnitName("player")) then
+				table.insert(ownCompanionNames, companionName)
+				table.insert(compsFollowingYou, companionName)
+			end
+			
+			-- Store companions based on their role
+			if companionRole == "Tank" then
+				table.insert(tankCompanions, companionName)
+			elseif companionRole == "Healer" then
+				table.insert(healerCompanions, companionName)				
+			elseif companionRole == "MDPS" then
+				table.insert(mdpsCompanions, companionName)
+			elseif companionRole == "RDPS" then
+				table.insert(rdpsCompanions, companionName)
+			end
+
+			-- Store companions based on their role
+			if companionClass == "Druid" then
+				table.insert(druidCompanions, companionName)
+			elseif companionClass == "Hunter" then
+				table.insert(hunterCompanions, companionName)
+			elseif companionClass == "Mage" then
+				table.insert(mageCompanions, companionName)
+			elseif companionClass == "Paladin" then
+				table.insert(paladinCompanions, companionName)
+			elseif companionClass == "Priest" then
+				table.insert(priestCompanions, companionName)
+			elseif companionClass == "Rogue" then
+				table.insert(rogueCompanions, companionName)
+			elseif companionClass == "Shaman" then
+				table.insert(shamanCompanions, companionName)
+			elseif companionClass == "Warlock" then
+				table.insert(warlockCompanions, companionName)
+			elseif companionClass == "Warrior" then
+				table.insert(warriorCompanions, companionName)
+			end
+			
+		end
+	end
+	if string.find(arg1,"ACINFO:ACTIVE:MORE") then
+		local companionInfo = string.sub(serverResponse, string.find(serverResponse, " ") + 1)
+		--DEFAULT_CHAT_FRAME:AddMessage("LIST: "..companionInfo)
+		
+		-- Lists of companions
+		moreCompanions = {}
+
+		-- Split companionInfo by space to extract companion details
+		local nameStart = 1
+		local nameEnd = string.find(companionInfo, " ", nameStart)
+
+		while nameEnd do
+			local nameBlock = string.sub(companionInfo, nameStart, nameEnd - 1)
+			table.insert(moreCompanions, nameBlock)
+			nameStart = nameEnd + 1
+			nameEnd = string.find(companionInfo, " ", nameStart)
+		end
+
+		-- Insert the last block of companion info (if there is no space at the end)
+		if nameStart <= string.len(companionInfo) then
+			local lastBlock = string.sub(companionInfo, nameStart)
+			table.insert(moreCompanions, lastBlock)
+		end	
+		
+		for _, companion in ipairs(moreCompanions) do
+			--DEFAULT_CHAT_FRAME:AddMessage("Companion Raw Data: " .. companion, 1.0, 1.0, 0.0) -- Output the raw companion data
+			local companionData = {}
+			local partStart = 1
+			local partEnd = string.find(companion, ":")
+			while partEnd do
+				table.insert(companionData, string.sub(companion, partStart, partEnd - 1))
+				partStart = partEnd + 1
+				partEnd = string.find(companion, ":", partStart)
+			end
+
+			-- Add the last part (owner name) if there is no colon at the end
+			if partStart <= string.len(companion) then
+				table.insert(companionData, string.sub(companion, partStart))
+			end
+			
+			-- Now we have companionData[1] = name, [2] = Class, [3] = Role, [4] = Kind (l/p), [5] = Level, [6] = Licence, [7] = Race, [8] = Gender, [9] = Durability, 
+			-- [10] = Specc, [11] = Owner, [12] = Master, [13] = Follow, [14] = Focus, [15] = CC, [16] = Transferable, [17] = AI Preset
+			
+			local companionName = companionData[1]
+			local companionRace = companionData[7]
+			if string.find(companionRace,1) then companionRace = "Human"
+			elseif string.find(companionRace,2) then companionRace = "Orc"
+			elseif string.find(companionRace,3) then companionRace = "Dwarf"			
+			elseif string.find(companionRace,4) then companionRace = "NightElf"			
+			elseif string.find(companionRace,5) then companionRace = "Undead"
+			elseif string.find(companionRace,6) then companionRace = "Tauren"			
+			elseif string.find(companionRace,7) then companionRace = "Gnome" 
+			elseif string.find(companionRace,8) then companionRace = "Troll" end	
+			local companionClass = companionData[2]
+			local companionRole = companionData[3]
+			local companionLicence = companionData[6]
+			local companionMaster = companionData[12]
+			if string.find(companionMaster,"%.") then companionMaster = UnitName("player") end
+			
+			allCompanionInfos[companionName] = {}
+			allCompanionInfos[companionName]["race"] = companionRace
+			allCompanionInfos[companionName]["class"] = companionClass	
+			allCompanionInfos[companionName]["role"] = companionRole
+			allCompanionInfos[companionName]["licence"] = companionLicence
+			allCompanionInfos[companionName]["master"] = companionMaster
+			allCompanionInfos[companionName]["specc"] = companionData[10]
+			allCompanionInfos[companionName]["focusmarks"] =  companionData[14]
+			allCompanionInfos[companionName]["ccmarks"] =  companionData[15]
+			allCompanionInfos[companionName]["transferable"] =  companionData[16]
+			allCompanionInfos[companionName]["following"] = companionData[13]
+			
+			if(companionMaster and string.find(companionMaster,UnitName("player"))) then
+				table.insert(ownCompanionNames, companionName)
+			elseif string.find(allCompanionInfos[companionName]["following"],UnitName("player")) then
+				table.insert(ownCompanionNames, companionName)
+				table.insert(compsFollowingYou, companionName)
+			end
+			
+			-- Store companions based on their role
+			if companionRole == "Tank" then
+				table.insert(tankCompanions, companionName)
+			elseif companionRole == "Healer" then
+				table.insert(healerCompanions, companionName)				
+			elseif companionRole == "MDPS" then
+				table.insert(mdpsCompanions, companionName)
+			elseif companionRole == "RDPS" then
+				table.insert(rdpsCompanions, companionName)
+			end
+
+			-- Store companions based on their role
+			if companionClass == "Druid" then
+				table.insert(druidCompanions, companionName)
+			elseif companionClass == "Hunter" then
+				table.insert(hunterCompanions, companionName)
+			elseif companionClass == "Mage" then
+				table.insert(mageCompanions, companionName)
+			elseif companionClass == "Paladin" then
+				table.insert(paladinCompanions, companionName)
+			elseif companionClass == "Priest" then
+				table.insert(priestCompanions, companionName)
+			elseif companionClass == "Rogue" then
+				table.insert(rogueCompanions, companionName)
+			elseif companionClass == "Shaman" then
+				table.insert(shamanCompanions, companionName)
+			elseif companionClass == "Warlock" then
+				table.insert(warlockCompanions, companionName)
+			elseif companionClass == "Warrior" then
+				table.insert(warriorCompanions, companionName)
+			end
+		end
+	end
+	if string.find(arg1,"ACINFO:CINFO:") then
+		--DEFAULT_CHAT_FRAME:AddMessage("CINFO: "..serverResponse)
+	end	
+	
+	--only do our stuff when the Server sends the a response we can handle so we don't clash with other addons using this Interface
+	if string.find(arg1,"GRINFO:ALL:FULL") and serverResponse ~= "GRINFO:ALL:FULL" then
+		--End the function prematurely if the server doesn't return any companion information			
+		
+		local companionInfo = string.sub(serverResponse, string.find(serverResponse, " ") + 1)		
+			
+		otherCompanions = {}		
+		allCompanions = {}
+
+		-- Split companionInfo by space to extract companion details
+		local nameStart = 1
+		local nameEnd = string.find(companionInfo, " ", nameStart)
+
+		while nameEnd do
+			local nameBlock = string.sub(companionInfo, nameStart, nameEnd - 1)
+			table.insert(allCompanions, nameBlock)
+			nameStart = nameEnd + 1
+			nameEnd = string.find(companionInfo, " ", nameStart)
+		end
+
+		-- Insert the last block of companion info (if there is no space at the end)
+		if nameStart <= string.len(companionInfo) then
+			local lastBlock = string.sub(companionInfo, nameStart)
+			table.insert(allCompanions, lastBlock)
+		end		
+				
+		-- Now parse the companions into their respective fields: name, race, class, role, and owner
+		for _, companion in ipairs(allCompanions) do
+			--DEFAULT_CHAT_FRAME:AddMessage("Companion Raw Data: " .. companion, 1.0, 1.0, 0.0) -- Output the raw companion data
+			local companionData = {}
+			local partStart = 1
+			local partEnd = string.find(companion, ":")
+			while partEnd do
+				table.insert(companionData, string.sub(companion, partStart, partEnd - 1))
+				partStart = partEnd + 1
+				partEnd = string.find(companion, ":", partStart)
+			end
+
+			-- Add the last part (owner name) if there is no colon at the end
+			if partStart <= string.len(companion) then
+				table.insert(companionData, string.sub(companion, partStart))
+			end
+
+			-- Now we have companionData[1] = name, [2] = race, [3] = class, [4] = role, [5] = Licence, [6] = owner
+			local companionName = companionData[1]
+			local companionOwner = companionData[6]			
+			if(companionOwner and not string.find(companionOwner,UnitName("player"))) then
+				if not (allCompanionInfos[companionName]) then allCompanionInfos[companionName] = {} end				
+				allCompanionInfos[companionName]["race"] = companionData[2]
+				allCompanionInfos[companionName]["class"] = companionData[3]				
+				allCompanionInfos[companionName]["role"] = companionData[4]
+				allCompanionInfos[companionName]["licence"] = companionData[5]				
+				table.insert(otherCompanions, companionName)
+			end			
+			
+		end
+		
+		
+	end
+	
+	--Save UnitIDs for all members in Group/raid
+	otherPlayers = {}
+	playerUnitIds = {}
+	local numMembers = 0
+	local getNameFunc
+	local getUnitIdFunc
+	local playerName = UnitName("player")
+	
+	if UnitInRaid("player") then
+		numMembers = GetNumRaidMembers()
+		getNameFunc = function(i) 
+			local name = GetRaidRosterInfo(i)
+			return name
+		end
+		getUnitIdFunc = function(j) 
+			local unitId = "raid"..j
+			return unitId
+		end
+	elseif GetNumPartyMembers() > 0 then
+		numMembers = GetNumPartyMembers()
+		getNameFunc = function(i) return UnitName("party"..i) end
+		getUnitIdFunc = function(j) return "party"..j end
+	else
+		--DEFAULT_CHAT_FRAME:AddMessage("Get all players failed: You are not in a party or raid.")
+		return
+	end
+	for i = 1, numMembers do
+		local name = getNameFunc(i)	
+		if name and name ~= playerName and allCompanionInfos and allCompanionInfos[name] then
+			allCompanionInfos[name]["unitID"] = getUnitIdFunc(i)
+		elseif otherCompanions and table_contains(otherCompanions,name) then
+			-- nothing for now
+		elseif name and name ~= playerName then
+			playerUnitIds[name] = getUnitIdFunc(i)
+			table.insert(otherPlayers,name)
+		end
+	end
+end
+	
+
+
 --[[------------------------------------
 		Cache
 --------------------------------------]]
@@ -343,7 +544,7 @@ local f1 = CreateFrame("Frame")
 	f1:RegisterEvent("PARTY_MEMBERS_CHANGED")
 
 	f1:SetScript("OnEvent", function()
-		ClientRequest("GRINFO:ALL:FULL")		 
+		updateData()
 end)
 
 -- Update Companion Data every time a companion gets followed or transferred
@@ -354,61 +555,56 @@ f2:RegisterEvent("CHAT_MSG_MONSTER_WHISPER")
 f2:SetScript("OnEvent", function()
 	-- case 1: following a single companion
 	if string.find(arg1,"will follow") then  
-		ClientRequest("GRINFO:ALL:FULL")
+		updateData()
 		if not(table_contains(followedComps,arg2)) then
 			table.insert(followedComps,arg2) 
 		end		
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
 	-- case 2: unfollowing a single companion
 	elseif string.find(arg1,"longer follow") then  
-		ClientRequest("GRINFO:ALL:FULL")
+		updateData()
 		if(table_contains(followedComps,arg2)) then
 			table.remove(followedComps,table_index(followedComps,arg2))
 		end
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end	
 	-- case 3: a companion is followed to us
 	elseif string.find(arg1,"followed") and string.find(arg1,"me to you") then 
-		ClientRequest("GRINFO:ALL:FULL")
+		updateData()
 		if(table_contains(followedComps,arg2)) then
 			table.remove(followedComps,table_index(followedComps,arg2))
 		end
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
 	-- case 4: a companion is unfollowed from us
 	elseif string.find(arg1,"unfollowed") then
-		ClientRequest("GRINFO:ALL:FULL")
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
+		updateData()
 	-- case 5: untransfering a single companion
 	elseif string.find(arg1,"transferred") and string.find(arg1," back to you") and string.find(arg1,"I have") then 
-		ClientRequest("GRINFO:ALL:FULL")
+		updateData()
 		if(table_contains(transferredComps,arg2)) then
 			table.remove(transferredComps,table_index(transferredComps,arg2))
 		end
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end	
 	-- case 6: a companion gets untransferred from you
 	elseif string.find(arg1,"transferred") and string.find(arg1,"back to") then 
-		ClientRequest("GRINFO:ALL:FULL")
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end	
+		updateData()
 	-- cast 7: transfering a single companion
 	elseif string.find(arg1,"transferred") and string.find(arg1," to ") and string.find(arg1,"I have") then 
-		ClientRequest("GRINFO:ALL:FULL")
+		updateData()
 		if not(table_contains(transferredComps,arg2)) then
 			table.insert(transferredComps,arg2) 
 		end
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
 	-- case 8: a companion gets transferred to you
 	elseif string.find(arg1,"transferred") and string.find(arg1,"me to you") then 
-		ClientRequest("GRINFO:ALL:FULL")
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end	
+		updateData()
 	-- case 9: unfollowing fails, own bot
 	elseif string.find(arg1,"I'm not following anybody") then 
-		ClientRequest("GRINFO:ALL:FULL")
 		if(table_contains(followedComps,arg2)) then
 			table.remove(followedComps,table_index(followedComps,arg2))
 		end
-		ClientRequest("GRINFO:ALL:FULL")
+		updateData()
 	-- case 10: unfollowing fails, foreign bot (most commonly happens when folling a bot that was followed to us)
 	elseif string.find(arg1,"You are not my Master,") and table_contains(followedComps,arg2) then 
-		table.remove(followedComps,table_index(followedComps,arg2))
+		updateData()
+		table.remove(followedComps,table_index(followedComps,arg2))		
+	-- case 11: a Bots specc is changed
+	elseif string.find(arg1,"Spec") then 
+		updateData()
 	end		
 	
 end)
@@ -422,9 +618,8 @@ f3:RegisterEvent("CHAT_MSG_SYSTEM")
 f3:SetScript("OnEvent", function()
 	-- case 1: unfollowing all companions
 	if string.find(arg1,"to following") then	
-		ClientRequest("GRINFO:ALL:FULL")
+		updateData()
 		followedComps = {}
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
 	-- case 2: following all companions
 	elseif string.find(arg1,"follow") and string.find(arg1,"will") then
 		for _, comp in pairs(ownCompanionNames) do
@@ -432,27 +627,26 @@ f3:SetScript("OnEvent", function()
 				table.insert(followedComps,comp) 
 			end	
 		end
-		ClientRequest("GRINFO:ALL:FULL")
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
+		updateData()
 	-- case 3: untransfering all companions
 	elseif string.find(arg1,"transferred") and string.find(arg1," back to you") then
-		ClientRequest("GRINFO:ALL:FULL")
+		updateData()
 		local sub1 = string.sub(arg1,20,string.find(arg1,"]")-1)
 		local name = string.sub(sub1,1,string.find(sub1,"|")-1)
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
 	-- case 4: transfering all companions
 	elseif string.find(arg1,"transferred") and string.find(arg1," to ")then
-		ClientRequest("GRINFO:ALL:FULL")
+		updateData()
 		local sub1 = string.sub(arg1,20,string.find(arg1,"]")-1)
 		local name = string.sub(sub1,1,string.find(sub1,"|")-1)
 		if not(table_contains(transferredComps,name)) then
 			table.insert(transferredComps,name) 
 		end
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
 	-- case 5: a Companions Role has been changed
 	elseif string.find(arg1,"set") and string.find(arg1," to ")then		
-		ClientRequest("GRINFO:ALL:FULL")
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
+		updateData()
+	-- case 5: a Companions Mark has been changed
+	elseif string.find(arg1,"Focus Mark") or string.find(arg1,"CC Marks") or string.find(arg1,"Mark assignments") then		
+		updateData()
 	end
 end)
 
@@ -463,7 +657,7 @@ f4:RegisterEvent("PLAYER_LOGIN")
 
 f4:SetScript("OnEvent", function()
 
-	ClientRequest("GRINFO:ALL:FULL")
+	updateData()
 	
     UnitPopupButtons["LEGENDARY"] = { text = "\124cffFF8000Legendary\124r", dist = 0 }
 
@@ -544,7 +738,8 @@ initFrame:SetScript("OnEvent", function()
 	UnitPopupButtons["SELF_DEBUG_PRIEST"] = { text = "Print Priests", dist = 0}
 	UnitPopupButtons["SELF_DEBUG_WARLOCK"] = { text = "Print Warlocks", dist = 0}
 	UnitPopupButtons["SELF_DEBUG_PALADIN"] = { text = "Print Paladins", dist = 0}
-	UnitPopupButtons["SELF_DEBUG_FOLLOWED"] = { text = "Print Followed Companions", dist = 0}
+	UnitPopupButtons["SELF_DEBUG_FOLLOWED"] = { text = "Print Companions you followed", dist = 0}	
+	UnitPopupButtons["SELF_DEBUG_FOLLOWED_SELF"] = { text = "Print Companions followed onto you", dist = 0}
 	UnitPopupButtons["SELF_DEBUG_TRANSFERED"] = { text = "Print Transferred Companions", dist = 0}	
 	UnitPopupButtons["SELF_DEBUG_OFF"] = { text = "Turn debug |cffFF0000off|r", dist = 0}
 
@@ -568,6 +763,7 @@ initFrame:SetScript("OnEvent", function()
 		"SELF_DEBUG_PALADIN",	
 		"SELF_DEBUG_FOLLOWED",
 		"SELF_DEBUG_TRANSFERED",
+		"SELF_DEBUG_FOLLOWED_SELF",
 		"SELF_DEBUG_OFF"
 		}
 	if string.find(savedSettings["Debug"],"ON") then table.insert(UnitPopupMenus["SELF"], 1, "SELF_DEBUG") end
@@ -1259,13 +1455,12 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
 	
 	--After Menu is cleared, check if unit is a bot of the player and show default if it is not
 	--[[if (UIDROPDOWNMENU_MENU_LEVEL == 1) then -- only do it once per right click
-		ClientRequest("GRINFO:ALL:FULL")
-		if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
+		updateData()
 	end	]]
 	
 	if(allCompanionInfos and table_length(allCompanionInfos) > 0) then 
 		if not(table_contains(otherPlayers,MICROBOT_SELECTED_UNIT_NAME)) then --Is this a companion?
-			if not(table_contains(ownCompanionNames,MICROBOT_SELECTED_UNIT_NAME)) then -- check if unit is a companion of the player
+			if not(table_contains(ownCompanionNames,MICROBOT_SELECTED_UNIT_NAME)) then -- check if unit is a companion of the player				
 				if(table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) then -- check if we have previously followed this bot
 					--one you followed, add unfollow option
 					UnitPopupButtons["BOT_UNFOLLOW"] = { text = "Unfollow"..markerBCAll..markerBCRole..markerBCClass, dist = 0 }
@@ -1471,7 +1666,16 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
         UnitPopupButtons["BOT_MAGE_SPEC_ARCANE"] = { text = "|cFFf069ccArcane|r", dist = 0 }
         UnitPopupButtons["BOT_MAGE_SPEC_FIRE"] = { text = "|cFFFF4500Fire|r", dist = 0 }
         UnitPopupButtons["BOT_MAGE_SPEC_FROST"] = { text = "|cFF34EBD2Frost|r", dist = 0 }
-		local mageSpecs = {"BOT_MAGE_SPEC_ARCANE","BOT_MAGE_SPEC_FIRE","BOT_MAGE_SPEC_FROST"}
+		local mageSpecs = {}
+		if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["specc"],"1")) then
+			table.insert(mageSpecs,"BOT_MAGE_SPEC_FROST")
+		end
+		if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["specc"],"2")) then
+			table.insert(mageSpecs,"BOT_MAGE_SPEC_FIRE")
+		end
+		if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["specc"],"3")) then
+			table.insert(mageSpecs,"BOT_MAGE_SPEC_ARCANE")
+		end
 		UnitPopupMenus["BOT_MAGE_SPEC"] = mageSpecs
 		table.insert(dynamicMenus, "BOT_MAGE_SPEC")
         -- Deny Danger Spells
@@ -1707,7 +1911,14 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
         UnitPopupButtons["BOT_PALADIN_SPEC"] = { text = "|cFFF58CBASet Spec|r" .. markerBCClass, dist = 0, nested = 1 }
         UnitPopupButtons["BOT_PALADIN_SPEC_MIGHT"] = { text = "|cFFC79C6EMight|r", dist = 0 }
         UnitPopupButtons["BOT_PALADIN_SPEC_MAGIC"] = { text = "|cFF69CCF0Magic|r", dist = 0 }
-		UnitPopupMenus["BOT_PALADIN_SPEC"] = {"BOT_PALADIN_SPEC_MIGHT","BOT_PALADIN_SPEC_MAGIC"}
+		local palaSpecs = {}
+		if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["specc"],"1")) then
+			table.insert(palaSpecs,"BOT_PALADIN_SPEC_MIGHT")
+		end
+		if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["specc"],"2")) then
+			table.insert(palaSpecs,"BOT_PALADIN_SPEC_MAGIC")
+		end
+		UnitPopupMenus["BOT_PALADIN_SPEC"] = palaSpecs
 		table.insert(dynamicMenus, "BOT_PALADIN_SPEC")
 		-- PALADIN: Specc Weapon options
         UnitPopupButtons["BOT_PALADIN_WEAPON"] = { text = "|cFFF58CBASet Weapon|r", dist = 0, nested = 1 }
@@ -2081,18 +2292,34 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
     UnitPopupButtons["BOT_ASSIGN_CC_MARK_CROSS"] = { text = "|cffFF0000Cross|r", dist = 0 }
     UnitPopupButtons["BOT_ASSIGN_CC_MARK_SKULL"] = { text = "|cFFFFFFA0Skull|r", dist = 0 }
     UnitPopupButtons["BOT_ASSIGN_CC_MARK_CLEAR"] = { text = "Clear CC (Defaults to |cff6699CCMoon|r)"..markerBCRole..markerBCClass..markerBCAll, dist = 0 }
-
-    UnitPopupMenus["BOT_ASSIGN_CC_MARK"] = {
-        "BOT_ASSIGN_CC_MARK_CLEAR",
-        "BOT_ASSIGN_CC_MARK_STAR",
-        "BOT_ASSIGN_CC_MARK_CIRCLE",
-        "BOT_ASSIGN_CC_MARK_DIAMOND",
-        "BOT_ASSIGN_CC_MARK_TRIANGLE",
-        "BOT_ASSIGN_CC_MARK_MOON",
-        "BOT_ASSIGN_CC_MARK_SQUARE",
-        "BOT_ASSIGN_CC_MARK_CROSS",
-        "BOT_ASSIGN_CC_MARK_SKULL"
-    }
+	
+	local validCCMarks = {}
+	table.insert(validCCMarks,"BOT_ASSIGN_CC_MARK_CLEAR")
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["ccmarks"],"1")) then
+		table.insert(validCCMarks,"BOT_ASSIGN_CC_MARK_STAR")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["ccmarks"],"2")) then
+		table.insert(validCCMarks,"BOT_ASSIGN_CC_MARK_CIRCLE")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["ccmarks"],"3")) then
+		table.insert(validCCMarks,"BOT_ASSIGN_CC_MARK_DIAMOND")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["ccmarks"],"4")) then
+		table.insert(validCCMarks,"BOT_ASSIGN_CC_MARK_TRIANGLE")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["ccmarks"],"5")) then
+		table.insert(validCCMarks,"BOT_ASSIGN_CC_MARK_MOON")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["ccmarks"],"6")) then
+		table.insert(validCCMarks,"BOT_ASSIGN_CC_MARK_SQUARE")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["ccmarks"],"7")) then
+		table.insert(validCCMarks,"BOT_ASSIGN_CC_MARK_CROSS")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["ccmarks"],"8")) then
+		table.insert(validCCMarks,"BOT_ASSIGN_CC_MARK_SKULL")
+	end
+    UnitPopupMenus["BOT_ASSIGN_CC_MARK"] = validCCMarks
 
     -- Assign focus mark buttons
     UnitPopupButtons["BOT_ASSIGN_FOCUS_MARK"] = { text = "Set |cffFF0000Focus|r Mark", dist = 0, nested = 1 }
@@ -2106,17 +2333,34 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
     UnitPopupButtons["BOT_ASSIGN_FOCUS_MARK_SKULL"] = { text = "|cFFFFFFA0Skull|r", dist = 0 }
     UnitPopupButtons["BOT_ASSIGN_FOCUS_MARK_CLEAR"] = { text = "Clear Focus (Defaults to |cFFFFFFA0Skull|r)"..markerBCRole..markerBCClass..markerBCAll, dist = 0 }
 
-    UnitPopupMenus["BOT_ASSIGN_FOCUS_MARK"] = {
-        "BOT_ASSIGN_FOCUS_MARK_CLEAR",
-        "BOT_ASSIGN_FOCUS_MARK_STAR",
-        "BOT_ASSIGN_FOCUS_MARK_CIRCLE",
-        "BOT_ASSIGN_FOCUS_MARK_DIAMOND",
-        "BOT_ASSIGN_FOCUS_MARK_TRIANGLE",
-        "BOT_ASSIGN_FOCUS_MARK_MOON",
-        "BOT_ASSIGN_FOCUS_MARK_SQUARE",
-        "BOT_ASSIGN_FOCUS_MARK_CROSS",
-        "BOT_ASSIGN_FOCUS_MARK_SKULL"
-    }
+    local validFocusMarks = {}
+	table.insert(validFocusMarks,"BOT_ASSIGN_FOCUS_MARK_CLEAR")
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["focusmarks"],"1")) then
+		table.insert(validFocusMarks,"BOT_ASSIGN_FOCUS_MARK_STAR")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["focusmarks"],"2")) then
+		table.insert(validFocusMarks,"BOT_ASSIGN_FOCUS_MARK_CIRCLE")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["focusmarks"],"3")) then
+		table.insert(validFocusMarks,"BOT_ASSIGN_FOCUS_MARK_DIAMOND")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["focusmarks"],"4")) then
+		table.insert(validFocusMarks,"BOT_ASSIGN_FOCUS_MARK_TRIANGLE")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["focusmarks"],"5")) then
+		table.insert(validFocusMarks,"BOT_ASSIGN_FOCUS_MARK_MOON")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["focusmarks"],"6")) then
+		table.insert(validFocusMarks,"BOT_ASSIGN_FOCUS_MARK_SQUARE")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["focusmarks"],"7")) then
+		table.insert(validFocusMarks,"BOT_ASSIGN_FOCUS_MARK_CROSS")
+	end
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["focusmarks"],"8")) then
+		table.insert(validFocusMarks,"BOT_ASSIGN_FOCUS_MARK_SKULL")
+	end
+    UnitPopupMenus["BOT_ASSIGN_FOCUS_MARK"] = validFocusMarks
+	
     -- Add cc and focus mark assignment to the dynamic menus in the last position
     table.insert(dynamicMenus, "BOT_ASSIGN_CC_MARK")
     table.insert(dynamicMenus, "BOT_ASSIGN_FOCUS_MARK")
@@ -2160,8 +2404,14 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
 	UnitPopupButtons["BOT_FOLLOW_ON_TARGET"] = { text = "Target", dist = 0 }
 	table.insert(followOptions, "BOT_FOLLOW_ON_TARGET")
 	UnitPopupMenus["BOT_FOLLOW_ON"] = followOptions
-    table.insert(dynamicMenus, "BOT_FOLLOW_ON")
 	
+	UnitPopupButtons["BOT_FOLLOW_RETURN"] = { text = "Return |cFFFFFFA0Follow|r"..markerBCAll, dist = 0 }
+	
+	if (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["following"] and string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["following"],UnitName("player"))) then
+		table.insert(dynamicMenus, "BOT_FOLLOW_RETURN")
+	else
+		table.insert(dynamicMenus, "BOT_FOLLOW_ON")
+	end
 	
 	 --[[--------------------------
     Add Transfer On Buttons	
@@ -2178,7 +2428,11 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
 	UnitPopupButtons["BOT_TRANSFER_ON_TARGET"] = { text = "Target", dist = 0 }
     table.insert(transferOptions, "BOT_TRANSFER_ON_TARGET")
 	UnitPopupMenus["BOT_TRANSFER_ON"] = transferOptions
-	table.insert(dynamicMenus, "BOT_TRANSFER_ON")
+	
+	-- Only show for bots that can still be transfered (or followed Companions because we do not have that information for them)
+	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["transferable"],"0")) then
+		table.insert(dynamicMenus, "BOT_TRANSFER_ON")
+	end
 	
 	--[[--------------------------
     Add Uninvite Button if we are not Party Leader
@@ -2325,15 +2579,20 @@ function UnitPopup_OnClick()
 			DEFAULT_CHAT_FRAME:AddMessage(comp)
 		end
 	elseif button == "SELF_DEBUG_FOLLOWED" then
-		DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Companions followed:")
+		DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Companions you followed:")
 		for _, comp in ipairs(followedComps) do
 			DEFAULT_CHAT_FRAME:AddMessage(comp)
-		end			
+		end		
+	elseif button == "SELF_DEBUG_FOLLOWED_SELF" then
+		DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Companions followed to you:")
+		for _, comp in ipairs(compsFollowingYou) do
+			DEFAULT_CHAT_FRAME:AddMessage(comp)
+		end	
 	elseif button == "SELF_DEBUG_TRANSFERED" then
 		DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Companions transferred:")
 		for _, comp in ipairs(transferredComps) do
 			DEFAULT_CHAT_FRAME:AddMessage(comp)
-		end	
+		end			
 	elseif button == "SELF_DEBUG_OFF" then
 		DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Turning Debug off, you will only be able to turn it on again with /mcm debug on")
 		setDebug("OFF")	
@@ -2456,7 +2715,15 @@ function UnitPopup_OnClick()
 			MCM_Send(".z unfollow")
 		else
 			BroadcastBotWhisperCommand({"ROLE","CLASS"},"set follow off")					
-		end				
+		end	
+	elseif string.find(button, "BOT_FOLLOW_RETURN") then
+		if(string.find(savedSettings["broadcastTo"],"ALL")) then
+			for _, comp in ipairs(compsFollowingYou) do
+				SendTargetedBotWhisperCommand(comp,"set follow off")
+			end
+		else
+			SendTargetedBotWhisperCommand(MICROBOT_SELECTED_UNIT_NAME,"set follow off")				
+		end					
 	elseif string.find(button, "BOT_UNTRANSFER") then
 		if(string.find(savedSettings["broadcastTo"],"ALL")) then
 			MCM_Send(".z untransfer")
