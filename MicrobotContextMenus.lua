@@ -37,6 +37,12 @@ function table_length(tbl)
 	return count
 end
 
+function table_last(tbl)
+	local result
+	for _, entry in pairs(tbl) do result = entry end
+	return result
+end
+
 function table_index(tbl,x)
 	index = 0
     for _, entry in pairs(tbl) do
@@ -124,12 +130,6 @@ function MCM_Send(msg)
 	else
 		SendChatMessage(msg)
 	end
-end
-
-function updateData()
-	MCM_Send(".z remove list")	 
-	ClientRequest("GRINFO:ALL:FULL")
-	if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
 end
 
 --[[------------------------------------
@@ -467,10 +467,12 @@ function SERVERTOCLIENT:OnEvent()
 			if partStart <= string.len(companion) then
 				table.insert(companionData, string.sub(companion, partStart))
 			end
-
+			
+			
+			
 			-- Now we have companionData[1] = name, [2] = race, [3] = class, [4] = role, [5] = Licence, [6] = owner
 			local companionName = companionData[1]
-			local companionOwner = companionData[6]			
+			local companionOwner = companionData[6]		
 			if(companionOwner and not string.find(companionOwner,UnitName("player"))) then
 				if not (allCompanionInfos) then allCompanionInfos = {} end
 				if not (allCompanionInfos[companionName]) then allCompanionInfos[companionName] = {} end				
@@ -524,7 +526,53 @@ function SERVERTOCLIENT:OnEvent()
 		end
 	end
 end
+
+--[[------------------------------------
+		Update Data
+--------------------------------------]]
 	
+function updateData()
+	returnedCompanions = {}
+	ownCompanionNames = {}
+	allCompanionInfos = {}
+	compsFollowingYou = {}
+	tankCompanions = {}
+	healerCompanions = {}
+	mdpsCompanions = {}
+	rdpsCompanions = {}
+	druidCompanions = {}
+	hunterCompanions = {}
+	mageCompanions = {}
+	paladinCompanions = {}
+	priestCompanions = {}
+	rogueCompanions = {}
+	shamanCompanions = {}
+	warlockCompanions = {}
+	warriorCompanions = {}
+	moreCompanions = {}
+	otherCompanions = {}		
+	allCompanions = {}
+	otherPlayers = {}
+	playerUnitIds = {}
+	MCM_Send(".z roster")	 
+	ClientRequest("GRINFO:ALL:FULL")
+	if string.find(savedSettings["Debug"],"ON") then DEFAULT_CHAT_FRAME:AddMessage("DEBUG: Request to Server made") end
+	
+end
+
+local updateDelay = 1.0
+local updateFlag = 0
+local updateFrame = CreateFrame("Frame")
+	updateFrame:SetScript("OnUpdate", function()
+		updateDelay = updateDelay - arg1
+		if updateDelay <= 0 then
+			if updateFlag >= 1 then
+				updateData()
+				updateFlag = 0 
+			end
+			updateDelay = 1.0
+		end
+	end)
 
 
 --[[------------------------------------
@@ -545,7 +593,7 @@ local f1 = CreateFrame("Frame")
 	f1:RegisterEvent("PARTY_MEMBERS_CHANGED")
 
 	f1:SetScript("OnEvent", function()
-		updateData()
+		updateFlag = 1
 end)
 
 -- Update Companion Data every time a companion gets followed or transferred
@@ -556,56 +604,56 @@ f2:RegisterEvent("CHAT_MSG_MONSTER_WHISPER")
 f2:SetScript("OnEvent", function()
 	-- case 1: following a single companion
 	if string.find(arg1,"will follow") then  
-		updateData()
+		updateFlag = 1
 		if not(table_contains(followedComps,arg2)) then
 			table.insert(followedComps,arg2) 
 		end		
 	-- case 2: unfollowing a single companion
 	elseif string.find(arg1,"longer follow") then  
-		updateData()
+		updateFlag = 1
 		if(table_contains(followedComps,arg2)) then
 			table.remove(followedComps,table_index(followedComps,arg2))
 		end
 	-- case 3: a companion is followed to us
 	elseif string.find(arg1,"followed") and string.find(arg1,"me to you") then 
-		updateData()
+		updateFlag = 1
 		if(table_contains(followedComps,arg2)) then
 			table.remove(followedComps,table_index(followedComps,arg2))
 		end
 	-- case 4: a companion is unfollowed from us
 	elseif string.find(arg1,"unfollowed") then
-		updateData()
+		updateFlag = 1
 	-- case 5: untransfering a single companion
 	elseif string.find(arg1,"transferred") and string.find(arg1," back to you") and string.find(arg1,"I have") then 
-		updateData()
+		updateFlag = 1
 		if(table_contains(transferredComps,arg2)) then
 			table.remove(transferredComps,table_index(transferredComps,arg2))
 		end
 	-- case 6: a companion gets untransferred from you
 	elseif string.find(arg1,"transferred") and string.find(arg1,"back to") then 
-		updateData()
+		updateFlag = 1
 	-- cast 7: transfering a single companion
 	elseif string.find(arg1,"transferred") and string.find(arg1," to ") and string.find(arg1,"I have") then 
-		updateData()
+		updateFlag = 1
 		if not(table_contains(transferredComps,arg2)) then
 			table.insert(transferredComps,arg2) 
 		end
 	-- case 8: a companion gets transferred to you
 	elseif string.find(arg1,"transferred") and string.find(arg1,"me to you") then 
-		updateData()
+		updateFlag = 1
 	-- case 9: unfollowing fails, own bot
 	elseif string.find(arg1,"I'm not following anybody") then 
 		if(table_contains(followedComps,arg2)) then
 			table.remove(followedComps,table_index(followedComps,arg2))
 		end
-		updateData()
+		updateFlag = 1
 	-- case 10: unfollowing fails, foreign bot (most commonly happens when folling a bot that was followed to us)
 	elseif string.find(arg1,"You are not my Master,") and table_contains(followedComps,arg2) then 
-		updateData()
+		updateFlag = 1
 		table.remove(followedComps,table_index(followedComps,arg2))		
 	-- case 11: a Bots specc is changed
 	elseif string.find(arg1,"Spec") then 
-		updateData()
+		updateFlag = 1
 	end		
 	
 end)
@@ -619,7 +667,7 @@ f3:RegisterEvent("CHAT_MSG_SYSTEM")
 f3:SetScript("OnEvent", function()
 	-- case 1: unfollowing all companions
 	if string.find(arg1,"to following") then	
-		updateData()
+		updateFlag = 1
 		followedComps = {}
 	-- case 2: following all companions
 	elseif string.find(arg1,"follow") and string.find(arg1,"will") then
@@ -628,15 +676,18 @@ f3:SetScript("OnEvent", function()
 				table.insert(followedComps,comp) 
 			end	
 		end
-		updateData()
+		updateFlag = 1
 	-- case 3: untransfering all companions
 	elseif string.find(arg1,"transferred") and string.find(arg1," back to you") then
-		updateData()
+		updateFlag = 1
 		local sub1 = string.sub(arg1,20,string.find(arg1,"]")-1)
 		local name = string.sub(sub1,1,string.find(sub1,"|")-1)
+		if(table_contains(transferredComps,name)) then
+			table.remove(transferredComps,table_index(transferredComps,name))
+		end
 	-- case 4: transfering all companions
 	elseif string.find(arg1,"transferred") and string.find(arg1," to ")then
-		updateData()
+		updateFlag = 1
 		local sub1 = string.sub(arg1,20,string.find(arg1,"]")-1)
 		local name = string.sub(sub1,1,string.find(sub1,"|")-1)
 		if not(table_contains(transferredComps,name)) then
@@ -644,10 +695,10 @@ f3:SetScript("OnEvent", function()
 		end
 	-- case 5: a Companions Role has been changed
 	elseif string.find(arg1,"set") and string.find(arg1," to ")then		
-		updateData()
+		updateFlag = 1
 	-- case 5: a Companions Mark has been changed
-	elseif string.find(arg1,"Focus Mark") or string.find(arg1,"CC Marks") or string.find(arg1,"Mark assignments") then		
-		updateData()
+	elseif string.find(arg1,"Focus Mark") or string.find(arg1,"CC Marks") or string.find(arg1,"Mark assignments") then
+		updateFlag = 1
 	end
 end)
 
@@ -658,7 +709,7 @@ f4:RegisterEvent("PLAYER_LOGIN")
 
 f4:SetScript("OnEvent", function()
 
-	updateData()
+	updateFlag = 1
 	
     UnitPopupButtons["LEGENDARY"] = { text = "\124cffFF8000Legendary\124r", dist = 0 }
 
@@ -1456,26 +1507,30 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
 	
 	--After Menu is cleared, check if unit is a bot of the player and show default if it is not
 	--[[if (UIDROPDOWNMENU_MENU_LEVEL == 1) then -- only do it once per right click
-		updateData()
+		updateFlag = 1
 	end	]]
 	
 	if(allCompanionInfos and table_length(allCompanionInfos) > 0) then 
 		if not(table_contains(otherPlayers,MICROBOT_SELECTED_UNIT_NAME)) then --Is this a companion?
-			if not(table_contains(ownCompanionNames,MICROBOT_SELECTED_UNIT_NAME)) then -- check if unit is a companion of the player				
-				if(table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) then -- check if we have previously followed this bot
-					--one you followed, add unfollow option
-					UnitPopupButtons["BOT_UNFOLLOW"] = { text = "Unfollow"..markerBCAll..markerBCRole..markerBCClass, dist = 0 }
-					table.insert(UnitPopupMenus[menuFrame],1,"BOT_UNFOLLOW")
-					--return originalUnitPopupShowMenu(dropdownMenu, which, unit, name, userData)	
-				elseif (table_contains(transferredComps,MICROBOT_SELECTED_UNIT_NAME)) then -- check if we have previously followed this bot
-					--one you transferred, add untransfer option
-					UnitPopupButtons["BOT_UNTRANSFER"] = { text = "Untransfer"..markerBCAll..markerBCRole..markerBCClass, dist = 0 }
-					table.insert(UnitPopupMenus[menuFrame],1,"BOT_UNTRANSFER")
-					return originalUnitPopupShowMenu(dropdownMenu, which, unit, name, userData)
-				else
-					-- None of the companions you control, open normal Menu
-					return originalUnitPopupShowMenu(dropdownMenu, which, unit, name, userData)
-				end				
+			if ownCompanionNames then
+				--if not(table_contains(ownCompanionNames,MICROBOT_SELECTED_UNIT_NAME)) then -- check if unit is a companion of the player				
+					if(table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) then -- check if we have previously followed this bot
+						--one you followed, add unfollow option
+						UnitPopupButtons["BOT_UNFOLLOW"] = { text = "Unfollow"..markerBCAll..markerBCRole..markerBCClass, dist = 0 }
+						table.insert(UnitPopupMenus[menuFrame],1,"BOT_UNFOLLOW")
+						--return originalUnitPopupShowMenu(dropdownMenu, which, unit, name, userData)	
+					elseif (table_contains(transferredComps,MICROBOT_SELECTED_UNIT_NAME)) then -- check if we have previously followed this bot
+						--one you transferred, add untransfer option
+						UnitPopupButtons["BOT_UNTRANSFER"] = { text = "Untransfer"..markerBCAll..markerBCRole..markerBCClass, dist = 0 }
+						table.insert(UnitPopupMenus[menuFrame],1,"BOT_UNTRANSFER")
+						return originalUnitPopupShowMenu(dropdownMenu, which, unit, name, userData)
+					elseif not(table_contains(ownCompanionNames,MICROBOT_SELECTED_UNIT_NAME)) then
+						-- None of the companions you control, open normal Menu
+						return originalUnitPopupShowMenu(dropdownMenu, which, unit, name, userData)
+					end				
+				--end
+			else -- we have no Companions, someone elses or other player
+				return originalUnitPopupShowMenu(dropdownMenu, which, unit, name, userData)
 			end
 		else --Other player, open normal Menu.
 			return originalUnitPopupShowMenu(dropdownMenu, which, unit, name, userData)
@@ -1566,6 +1621,16 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
 	elseif (MICROBOT_SELECTED_UNIT_CLASS == "Shaman" and allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["role"] and string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["role"],"DPS")) then
 		table.insert(UnitPopupMenus["BOT_CONTROL"],"BOT_OFFHEAL")
 		table.insert(UnitPopupMenus["BOT_CONTROL"],"BOT_OFFDPS") 
+	end
+	
+	UnitPopupButtons["BOT_DISPEL_ALL"] = { text = "Set Dispel All"..markerBCClass, dist = 0 }	
+	UnitPopupButtons["BOT_DISPEL_PRIO"] = { text = "Set Dispel Prio"..markerBCClass, dist = 0 }
+	UnitPopupButtons["BOT_DISPEL_NONE"] = { text = "Set Dispel None"..markerBCClass, dist = 0 }
+		
+	if (MICROBOT_SELECTED_UNIT_CLASS == "Priest" or MICROBOT_SELECTED_UNIT_CLASS == "Paladin" or MICROBOT_SELECTED_UNIT_CLASS == "Druid" or MICROBOT_SELECTED_UNIT_CLASS == "Shaman") then
+		table.insert(UnitPopupMenus["BOT_CONTROL"],"BOT_DISPEL_ALL")
+		table.insert(UnitPopupMenus["BOT_CONTROL"],"BOT_DISPEL_PRIO")
+		table.insert(UnitPopupMenus["BOT_CONTROL"],"BOT_DISPEL_NONE")
 	end
 	
 	UnitPopupButtons["BOT_LIMITER_ON"] = { text = "Threat Limiter |cff1EFF00on|r"..markerBCAll..markerBCRole..markerBCClass, dist = 0 }	
@@ -2432,7 +2497,9 @@ function UnitPopup_ShowMenu(dropdownMenu, which, unit, name, userData)
 	
 	-- Only show for bots that can still be transfered (or followed Companions because we do not have that information for them)
 	if (followedComps and table_contains(followedComps,MICROBOT_SELECTED_UNIT_NAME)) or (allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["transferable"],"0")) then
-		table.insert(dynamicMenus, "BOT_TRANSFER_ON")
+		if(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME] and not string.find(allCompanionInfos[MICROBOT_SELECTED_UNIT_NAME]["following"],UnitName("player"))) then
+			table.insert(dynamicMenus, "BOT_TRANSFER_ON")
+		end
 	end
 	
 	--[[--------------------------
@@ -2650,6 +2717,12 @@ function UnitPopup_OnClick()
 	elseif button == "BOT_OFFDPS" then
 		offDpsRequested = "y"
 		SetPercentageFrame:Show()
+	elseif button == "BOT_DISPEL_ALL" then
+		BroadcastBotWhisperCommand({"CLASS"},"set dispel all")
+	elseif button == "BOT_DISPEL_PRIO" then
+		BroadcastBotWhisperCommand({"CLASS"},"set dispel prio")
+	elseif button == "BOT_DISPEL_NONE" then
+		BroadcastBotWhisperCommand({"CLASS"},"set dispel none")
 	elseif button == "BOT_LIMITER_ON" then
 		BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"set limiter on")
 	elseif button == "BOT_LIMITER_OFF" then
@@ -2689,19 +2762,61 @@ function UnitPopup_OnClick()
 	elseif button == "BOT_FOLLOW_ON_TANK" then
 		local tankname
 		for _, comp in ipairs(tankCompanions) do tankname=comp end
-		BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"set follow on " .. tankname)			
+		if(string.find(savedSettings["broadcastTo"],"ALL")) then
+			TargetUnit(allCompanionInfos[tankname]["unitID"])
+			-- Use a non-blocking delay mechanism to let the target go through (c_timer does not work, less than a second misses them sometimes)
+			local delayTime = 1.0
+			local frame = CreateFrame("Frame")
+			frame:SetScript("OnUpdate", function()
+				delayTime = delayTime - arg1
+				if delayTime <= 0 then
+					MCM_Send(".z follow")
+					frame:SetScript("OnUpdate", nil)
+				end
+			end)
+		else		
+			BroadcastBotWhisperCommand({"ROLE","CLASS"},"set follow on " .. tankname)			
+		end
 	elseif button == "BOT_FOLLOW_ON_HEALER" then
 		local healername
 		for _, comp in ipairs(healerCompanions) do healername=comp end
 		BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"set follow on " .. healername)		
 	elseif button == "BOT_FOLLOW_ON_RDPS" then
-		local rdpsname		
-		for _, comp in ipairs(rdpsCompanions) do rdpsname=comp end
-		BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"set follow on " .. rdpsname)		
+		local rdpsname	
+		for _, comp in ipairs(rdpsCompanions) do rdpsname=comp end	
+		if(string.find(savedSettings["broadcastTo"],"ALL")) then
+			TargetUnit(allCompanionInfos[mdpsname]["unitID"])
+			-- Use a non-blocking delay mechanism to let the target go through (c_timer does not work, less than a second misses them sometimes)
+			local delayTime = 1.0
+			local frame = CreateFrame("Frame")
+			frame:SetScript("OnUpdate", function()
+				delayTime = delayTime - arg1
+				if delayTime <= 0 then
+					MCM_Send(".z follow")
+					frame:SetScript("OnUpdate", nil)
+				end
+			end)
+		else			
+			BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"set follow on " .. rdpsname)		
+		end
 	elseif button == "BOT_FOLLOW_ON_MDPS" then
 		local mdpsname
 		for _, comp in ipairs(mdpsCompanions) do mdpsname=comp end
-		BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"set follow on " .. mdpsname)				
+		if(string.find(savedSettings["broadcastTo"],"ALL")) then
+			TargetUnit(allCompanionInfos[mdpsname]["unitID"])
+			-- Use a non-blocking delay mechanism to let the target go through (c_timer does not work, less than a second misses them sometimes)
+			local delayTime = 1.0
+			local frame = CreateFrame("Frame")
+			frame:SetScript("OnUpdate", function()
+				delayTime = delayTime - arg1
+				if delayTime <= 0 then
+					MCM_Send(".z follow")
+					frame:SetScript("OnUpdate", nil)
+				end
+			end)
+		else			
+			BroadcastBotWhisperCommand({"ROLE","CLASS"},"set follow on " .. mdpsname)
+		end
 	elseif button == "BOT_FOLLOW_ON_TARGET" then
 		if(string.find(savedSettings["broadcastTo"],"ALL")) then
 			MCM_Send(".z follow")
@@ -2709,8 +2824,22 @@ function UnitPopup_OnClick()
 			BroadcastBotWhisperCommand({"ROLE","CLASS"},"set follow on " .. UnitName("target"))			
 		end
 	elseif string.find(button, "^BOT_FOLLOW_ON_") then
-        local _, _, playerName = string.find(button, "_([^_]+)$")
-		BroadcastBotWhisperCommand({"ALL","ROLE","CLASS"},"set follow on " .. playerName)		
+        local _, _, playerName = string.find(button, "_([^_]+)$")		
+		if(string.find(savedSettings["broadcastTo"],"ALL")) then
+			TargetUnit(playerUnitIds[playerName])
+			-- Use a non-blocking delay mechanism to let the target go through (c_timer does not work, less than a second misses them sometimes)
+			local delayTime = 1.0
+			local frame = CreateFrame("Frame")
+			frame:SetScript("OnUpdate", function()
+				delayTime = delayTime - arg1
+				if delayTime <= 0 then
+					MCM_Send(".z follow")
+					frame:SetScript("OnUpdate", nil)
+				end
+			end)
+		else
+			BroadcastBotWhisperCommand({"ROLE","CLASS"},"set follow on " .. playerName)	
+		end
 	elseif string.find(button, "BOT_UNFOLLOW") then
 		if(string.find(savedSettings["broadcastTo"],"ALL")) then
 			MCM_Send(".z unfollow")
@@ -3092,7 +3221,7 @@ function UnitPopup_OnClick()
         end
 	 elseif button == "BOT_PALADIN_BLESSING_2_DEFAULT" then
         BroadcastBotWhisperCommand({"CLASS"},"set blessing cancel")
-    elseif button == "BOT_PALADIN_BLESSING_MIGHT" then
+    elseif button == "BOT_PALADIN_BLESSING_2_MIGHT" then
         if MICROBOT_SELECTED_UNIT_LEVEL >= 52 then
             BroadcastBotWhisperCommand({"CLASS"},"set blessing second Greater Blessing of Might")
         else

@@ -64,3 +64,10 @@ Changed that "Set Transfer On" Option now only shows if a Companion can still be
 Changed that "Set Focus/CC Mark" Options now only shows Marks the Companion is not set to already (or all for followed companions bc we do not have that information for them consistently)
 Changed that "Set Spec" Options now only shows Specs the Companion is not set to already (or all for followed companions bc we do not have that information for them consistently)
 Changed that Companions followed to you now show "Return Follow" instead of set follow on.
+Fixed a bug with setting Might as second Blessing
+Added "Set Dispel all/Prio/none" to Companion Settings
+Fixed a Problem when alone in a Group with a bunch of Companions like BGs
+Changed how often the Addon gets his Data from to Server to prevent you getting Muted with a lot of Companions following you. This might lead to a slight delay (1s) until your Data is updated after you change something
+Fixed getting muted when following all companions onto someone
+Fixed transferred Companions not being properly tracked all the time
+Changed that transfer on will only be an Option for your own Companions now, not ones followed onto you
